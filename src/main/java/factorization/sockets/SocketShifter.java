@@ -24,7 +24,6 @@ import factorization.util.ItemUtil;
 import factorization.util.SpaceUtil;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
@@ -36,7 +35,7 @@ import java.io.IOException;
 
 public class SocketShifter extends TileEntitySocketBase {
     public enum ShifterMode {
-        MODE_STREAM, MODE_PULSE_EXACT, MODE_PULSE_SOME;
+        MODE_STREAM, MODE_PULSE_EXACT, MODE_PULSE_SOME
     }
     //public boolean streamMode = true; // be like a hopper or a filter
     public ShifterMode mode = ShifterMode.MODE_PULSE_SOME;
@@ -110,9 +109,6 @@ public class SocketShifter extends TileEntitySocketBase {
                 cooldown--;
                 return;
             }
-            if (!powered) {
-                return;
-            }
         } else {
             if (!powered && cooldown > 0) {
                 cooldown--;
@@ -121,11 +117,11 @@ public class SocketShifter extends TileEntitySocketBase {
             if (cooldown > 0) {
                 return;
             }
-            if (!powered) {
-                return;
-            }
         }
-        
+        if (!powered) {
+            return;
+        }
+
         FzInv localInv, foreignInv;
         ForgeDirection back = facing.getOpposite();
         if (socket != this) {
@@ -198,7 +194,7 @@ public class SocketShifter extends TileEntitySocketBase {
                     }
                 }
                 if (toMove <= 0) {
-                    break out;
+                    break;
                 }
                 if (firstEmptySlot == -1) {
                     firstEmptySlot = pushStart;
@@ -263,7 +259,7 @@ public class SocketShifter extends TileEntitySocketBase {
                         if (limit == origLimit) break;
                     }
                 }
-                break out;
+                break;
             }
         }
         if (had_change) {
@@ -282,8 +278,8 @@ public class SocketShifter extends TileEntitySocketBase {
         if (foreignInv != null) return foreignInv;
         final ForgeDirection top = facing;
 
-        for (Entity entity : (Iterable<EntityItem>)worldObj.getEntitiesWithinAABB(IInventory.class, getEntityBox(socket, coord, top, 0))) {
-            foreignInv = InvUtil.openInventory(entity, false);
+        for (IInventory entity : worldObj.getEntitiesWithinAABB(IInventory.class, getEntityBox(socket, coord, top, 0))) {
+            foreignInv = InvUtil.openInventory((Entity) entity, false);
             if (foreignInv != null) {
                 break;
             }
@@ -409,8 +405,8 @@ public class SocketShifter extends TileEntitySocketBase {
                 BlockIcons.socket$shifter_side, BlockIcons.socket$shifter_side,
                 BlockIcons.socket$shifter_side, BlockIcons.socket$shifter_side,
                 BlockIcons.socket$shifter_side, BlockIcons.socket$shifter_side);
-        final float minYs[] = new float[] { 8F/16F, 3F/16F, -2F/16F };
-        final float ds[] = new float[] { 4F/16F, 5F/16F, 6F/16F };
+        final float[] minYs = new float[] { 8F/16F, 3F/16F, -2F/16F };
+        final float[] ds = new float[] { 4F/16F, 5F/16F, 6F/16F };
         int end = ds.length;
         if (motor != null) end--;
         for (int i = 0; i < end; i++) {

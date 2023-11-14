@@ -173,25 +173,22 @@ public class PumpLiquids extends SocketFanturpeller implements IFluidHandler {
     
     private class Drainer implements PumpAction {
         // o <-- o <-- o <-- o <-- o
-        final ArrayDeque<PumpCoord> frontier = new ArrayDeque();
-        final HashSet<PumpCoord> visited = new HashSet();
-        final PriorityQueue<PumpCoord> queue = new PriorityQueue<PumpCoord>(128, getComparator());
-        final ArrayDeque<FoundFluidHandler> foundContainers = new ArrayDeque();
+        final ArrayDeque<PumpCoord> frontier = new ArrayDeque<>();
+        final HashSet<PumpCoord> visited = new HashSet<>();
+        final PriorityQueue<PumpCoord> queue = new PriorityQueue<>(128, getComparator());
+        final ArrayDeque<FoundFluidHandler> foundContainers = new ArrayDeque<>();
         /*
          * Eh. Memory inefficient.
          * Could we switch to packed arrays?
          */
         
         Comparator<PumpCoord> getComparator() {
-            return new Comparator<PumpCoord>() {
-                @Override
-                public int compare(PumpCoord a, PumpCoord b) {
-                    // If we're draining, we want the furthest & highest liquid
-                    if (a.y == b.y) { 
-                        return b.pathDistance - a.pathDistance;
-                    }
-                    return b.y - a.y;
+            return (a, b) -> {
+                // If we're draining, we want the furthest & highest liquid
+                if (a.y == b.y) {
+                    return b.pathDistance - a.pathDistance;
                 }
+                return b.y - a.y;
             };
         }
         
@@ -326,23 +323,14 @@ public class PumpLiquids extends SocketFanturpeller implements IFluidHandler {
         }
         
         Comparator<PumpCoord> getComparator() {
-            return new Comparator<PumpCoord>() {
-                @Override
-                public int compare(PumpCoord a, PumpCoord b) {
-                    // If we're flooding, we want the furthest & lowest liquid
-                    if (a.y == b.y) {
-                        if (a.pathDistance == b.pathDistance) {
-                            return 0;
-                        } else if (a.pathDistance > b.pathDistance) {
-                            return 1;
-                        } else {
-                            return -1;
-                        }
-                    } else if (a.y > b.y) {
-                        return 1;
-                    } else {
-                        return -1;
-                    }
+            return (a, b) -> {
+                // If we're flooding, we want the furthest & lowest liquid
+                if (a.y == b.y) {
+                    return Short.compare(a.pathDistance, b.pathDistance);
+                } else if (a.y > b.y) {
+                    return 1;
+                } else {
+                    return -1;
                 }
             };
         }

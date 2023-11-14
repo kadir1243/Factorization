@@ -1,34 +1,37 @@
 package factorization.redstone;
 
-import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-
-import factorization.api.datahelpers.DataHelper;
-import factorization.shared.*;
-import factorization.util.DataUtil;
-import factorization.util.InvUtil;
-import factorization.util.ItemUtil;
-import net.minecraft.entity.Entity;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.ISidedInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.AxisAlignedBB;
-import net.minecraft.util.IIcon;
-import net.minecraft.util.MathHelper;
-import net.minecraftforge.common.util.ForgeDirection;
 import cpw.mods.fml.common.event.FMLModIdMappingEvent;
 import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.GameRegistry.UniqueIdentifier;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import factorization.api.Coord;
+import factorization.api.datahelpers.DataHelper;
 import factorization.common.BlockIcons;
 import factorization.common.FactoryType;
+import factorization.shared.BlockClass;
+import factorization.shared.Core;
+import factorization.shared.TileEntityFactorization;
+import factorization.util.DataUtil;
+import factorization.util.InvUtil;
 import factorization.util.InvUtil.FzInv;
+import factorization.util.ItemUtil;
+import net.minecraft.entity.Entity;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.inventory.ISidedInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.AxisAlignedBB;
+import net.minecraft.util.IIcon;
+import net.minecraft.util.MathHelper;
+import net.minecraftforge.common.util.ForgeDirection;
+
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 public class TileEntityParaSieve extends TileEntityFactorization implements ISidedInventory {
     public ItemStack[] filters = new ItemStack[8];
@@ -178,16 +181,14 @@ public class TileEntityParaSieve extends TileEntityFactorization implements ISid
             }
             empty = false;
             if (itemInRange(a, b, stranger)) {
-                return true ^ p;
+                return !p;
             }
         }
         return empty ^ p;
     }
     
     private byte self_recursion = 0;
-    private static ThreadLocal<Integer> stack_recursion = new ThreadLocal<Integer>() {
-        @Override protected Integer initialValue() {return 0;};
-    };
+    private static ThreadLocal<Integer> stack_recursion = ThreadLocal.withInitial(() -> 0);
     
     protected boolean _beginRecursion() {
         int sr = stack_recursion.get() + 1;
@@ -246,10 +247,10 @@ public class TileEntityParaSieve extends TileEntityFactorization implements ISid
             cached_te = te;
             return InvUtil.openDoubleChest((IInventory) te, true);
         }
-        for (Entity ent : (Iterable<Entity>)worldObj.getEntitiesWithinAABB(IInventory.class, getTargetArea())) {
-            if (ent instanceof IInventory) {
-                cached_ent = ent;
-                return (IInventory) ent;
+        for (IInventory ent : worldObj.getEntitiesWithinAABB(IInventory.class, getTargetArea())) {
+            if (ent != null) {
+                cached_ent = (Entity) ent;
+                return ent;
             }
         }
         return null;
@@ -418,12 +419,7 @@ public class TileEntityParaSieve extends TileEntityFactorization implements ISid
             if (_beginRecursion()) {
                 return 11;
             }
-            boolean empty = true;
-            for (int fidx = 0; fidx < filters.length; fidx++) {
-                if (filters[fidx] != null) {
-                    empty = false;
-                }
-            }
+            boolean empty = Arrays.stream(filters).noneMatch(Objects::nonNull);
             if (empty) {
                 return getCoord().add(getFacing()).getComparatorOverride(getFacing().getOpposite());
             }
@@ -544,7 +540,7 @@ public class TileEntityParaSieve extends TileEntityFactorization implements ISid
     
     void classifyItems() {
         Core.logFine("[parasieve] Classifying items");
-        HashMap<String, Short> modMap = new HashMap();
+        Map<String, Short> modMap = new HashMap<>();
         short seen = 1;
         Arrays.fill(itemId2modIndex, (short) 0);
         for (Item item : (Iterable<Item>) Item.itemRegistry) {
@@ -555,8 +551,7 @@ public class TileEntityParaSieve extends TileEntityFactorization implements ISid
             try {
                 ui = GameRegistry.findUniqueIdentifierFor(item);
             } catch (Throwable e) {
-                Core.logWarning("Error looking up item: " + item);
-                e.printStackTrace();
+                Core.logWarn("Error looking up item: " + item, e);
                 continue;
             }
             String modName = null;

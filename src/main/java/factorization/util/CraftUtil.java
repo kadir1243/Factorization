@@ -2,8 +2,6 @@ package factorization.util;
 
 import factorization.api.Coord;
 import factorization.shared.Core;
-import factorization.util.ItemUtil;
-import factorization.util.PlayerUtil;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.*;
@@ -21,8 +19,8 @@ import java.util.*;
 public final class CraftUtil {
     private static final ItemStack[] slots3x3 = new ItemStack[9];
     public static boolean craft_succeeded = false;
-    public static ArrayList<ItemStack> emptyArrayList = new ArrayList(0);
-    static ArrayList<IRecipe> recipeCache = new ArrayList();
+    public static ArrayList<ItemStack> emptyArrayList = new ArrayList<>(0);
+    static ArrayList<IRecipe> recipeCache = new ArrayList<>();
     private static int cache_fear = 10;
     private static IRecipe stupid_hacky_vanilla_item_repair_recipe = new IRecipe() {
         ItemStack firstItem, secondItem, result;
@@ -137,9 +135,7 @@ public final class CraftUtil {
     }
 
     public static List<ItemStack> craft1x1(TileEntity where, boolean fake, ItemStack what) {
-        for (int i = 0; i < slots3x3.length; i++) {
-            slots3x3[i] = null;
-        }
+        Arrays.fill(slots3x3, null);
         slots3x3[4] = what;
         return craft3x3(where, fake, false, slots3x3);
     }
@@ -148,9 +144,7 @@ public final class CraftUtil {
         if (wantSize(4, where, slots)) {
             return Arrays.asList(slots);
         }
-        for (int i = 0; i < slots3x3.length; i++) {
-            slots3x3[i] = null;
-        }
+        Arrays.fill(slots3x3, null);
         slots3x3[0] = slots[0];
         slots3x3[1] = slots[1];
         slots3x3[3] = slots[2];
@@ -178,7 +172,7 @@ public final class CraftUtil {
             // crafting failed, dump everything
             return leaveSlots ? emptyArrayList : Arrays.asList(slots);
         }
-        final ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
+        final ArrayList<ItemStack> ret = new ArrayList<>();
         if (fake) {
             ret.add(result);
             craft_succeeded = true;
@@ -271,32 +265,31 @@ public final class CraftUtil {
 
     //Recipe creation
     public static IRecipe createShapedRecipe(ItemStack result, Object... args) {
-        String var3 = "";
+        StringBuilder var3 = new StringBuilder();
         int var4 = 0;
         int var5 = 0;
         int var6 = 0;
 
         if (args[var4] instanceof String[]) {
-            String[] var7 = (String[]) ((String[]) args[var4++]);
+            String[] var7 = (String[]) args[var4++];
 
-            for (int var8 = 0; var8 < var7.length; ++var8) {
-                String var9 = var7[var8];
+            for (String var9 : var7) {
                 ++var6;
                 var5 = var9.length();
-                var3 = var3 + var9;
+                var3.append(var9);
             }
         } else {
             while (args[var4] instanceof String) {
                 String var11 = (String) args[var4++];
                 ++var6;
                 var5 = var11.length();
-                var3 = var3 + var11;
+                var3.append(var11);
             }
         }
 
-        HashMap var12;
+        Map<Character, ItemStack> var12 = new HashMap<>();
 
-        for (var12 = new HashMap(); var4 < args.length; var4 += 2) {
+        while (var4 < args.length) {
             Character var13 = (Character) args[var4];
             ItemStack var14 = null;
 
@@ -309,6 +302,7 @@ public final class CraftUtil {
             }
 
             var12.put(var13, var14);
+            var4 += 2;
         }
 
         ItemStack[] var15 = new ItemStack[var5 * var6];
@@ -316,8 +310,8 @@ public final class CraftUtil {
         for (int var16 = 0; var16 < var5 * var6; ++var16) {
             char var10 = var3.charAt(var16);
 
-            if (var12.containsKey(Character.valueOf(var10))) {
-                var15[var16] = ((ItemStack) var12.get(Character.valueOf(var10))).copy();
+            if (var12.containsKey(var10)) {
+                var15[var16] = ((ItemStack) var12.get(var10)).copy();
             } else {
                 var15[var16] = null;
             }
@@ -327,25 +321,15 @@ public final class CraftUtil {
     }
 
     public static IRecipe createShapelessRecipe(ItemStack result, Object... args) {
-        ArrayList var3 = new ArrayList();
-        int var5 = args.length;
+        List<ItemStack> var3 = new ArrayList<>();
 
-        for (int var6 = 0; var6 < var5; ++var6)
-        {
-            Object var7 = args[var6];
-
-            if (var7 instanceof ItemStack)
-            {
+        for (Object var7 : args) {
+            if (var7 instanceof ItemStack) {
                 var3.add(((ItemStack) var7).copy());
-            }
-            else if (var7 instanceof Item)
-            {
+            } else if (var7 instanceof Item) {
                 var3.add(new ItemStack((Item) var7));
-            }
-            else
-            {
-                if (!(var7 instanceof Block))
-                {
+            } else {
+                if (!(var7 instanceof Block)) {
                     throw new RuntimeException("Invalid shapeless recipy!");
                 }
 

@@ -1,18 +1,22 @@
 package factorization.fzds;
 
-import java.lang.ref.WeakReference;
-import java.util.*;
-import java.util.Map.Entry;
-
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import com.google.common.collect.Iterables;
+import factorization.api.Coord;
+import factorization.api.DeltaCoord;
+import factorization.api.Quaternion;
+import factorization.fzds.DeltaChunk.AreaMap;
+import factorization.fzds.interfaces.DeltaCapability;
+import factorization.fzds.interfaces.IDeltaChunk;
+import factorization.fzds.interfaces.Interpolation;
+import factorization.notify.Notice;
+import factorization.shared.Core;
 import factorization.util.LangUtil;
 import factorization.util.PlayerUtil;
 import factorization.util.SpaceUtil;
 import net.minecraft.client.Minecraft;
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.command.SyntaxErrorException;
-import net.minecraft.command.WrongUsageException;
+import net.minecraft.command.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
@@ -29,21 +33,9 @@ import net.minecraft.world.biome.BiomeGenBase;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.util.ForgeDirection;
 
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
-import com.google.common.collect.Iterables;
-
-import factorization.api.Coord;
-import factorization.api.DeltaCoord;
-import factorization.api.ICoordFunction;
-import factorization.api.Quaternion;
-import factorization.fzds.DeltaChunk.AreaMap;
-import factorization.fzds.DeltaChunk.DseDestination;
-import factorization.fzds.interfaces.DeltaCapability;
-import factorization.fzds.interfaces.IDeltaChunk;
-import factorization.fzds.interfaces.Interpolation;
-import factorization.notify.Notice;
-import factorization.shared.Core;
+import java.lang.ref.WeakReference;
+import java.util.*;
+import java.util.Map.Entry;
 
 public class FZDSCommand extends CommandBase {
     //private static DimensionSliceEntity currentWE = null;
@@ -59,7 +51,7 @@ public class FZDSCommand extends CommandBase {
     
     public static abstract class SubCommand {
         String[] help;
-        ArrayList<String> altNames = new ArrayList<String>();
+        ArrayList<String> altNames = new ArrayList<>();
         private boolean needOp;
         private boolean needPlayer;
         private boolean needCoord;
@@ -198,7 +190,7 @@ public class FZDSCommand extends CommandBase {
         }
     }
     
-    private static ArrayList<SubCommand> subCommands = new ArrayList<SubCommand>();
+    private static ArrayList<SubCommand> subCommands = new ArrayList<>();
     public static SubCommand help;
     
     public static SubCommand add(SubCommand cmd, Requires... reqs) {
@@ -218,8 +210,7 @@ public class FZDSCommand extends CommandBase {
     
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-        if (sender instanceof EntityPlayerMP) {
-            EntityPlayerMP player = (EntityPlayerMP) sender;
+        if (sender instanceof EntityPlayerMP player) {
             boolean op = PlayerUtil.isPlayerOpped(player);
             boolean cr = player.capabilities.isCreativeMode;
             if (!(op || cr)) {
@@ -243,14 +234,14 @@ public class FZDSCommand extends CommandBase {
         LangUtil.sendChatMessage(true, sender, "Not a command");
     }
     
-    private static WeakReference<IDeltaChunk> currentSelection = new WeakReference<IDeltaChunk>(null);
+    private static WeakReference<IDeltaChunk> currentSelection = new WeakReference<>(null);
     
     public static void setSelection(IDeltaChunk dse) {
-        currentSelection = new WeakReference<IDeltaChunk>(dse);
+        currentSelection = new WeakReference<>(dse);
     }
     
     public static Coord parseCoord(World world, String src) {
-        ArrayList<Integer> parts = new ArrayList<Integer>();
+        ArrayList<Integer> parts = new ArrayList<>();
         for (String part : comma.split(src)) {
             parts.add(Integer.parseInt(part));
         }
@@ -277,7 +268,7 @@ public class FZDSCommand extends CommandBase {
     void runSubCommand(SubCommand cmd, ICommandSender sender, String[] args) {
         cmd.reset();
         cmd.setup(sender);
-        ArrayList<String> cleanedArgs = new ArrayList<String>();
+        List<String> cleanedArgs = new ArrayList<>();
         visitedWorld = null;
         boolean first = true;
         for (String a : args) {
@@ -296,14 +287,14 @@ public class FZDSCommand extends CommandBase {
             } else if (a.startsWith("#")) {
                 cmd.user = parseCoord(sender.getEntityWorld(), a.substring(1));
                 visitWorld(cmd.user.w);
-            } else if (a.startsWith("@") && first == false && !a.startsWith("@?") && !a.equals("@")) {
+            } else if (a.startsWith("@") && !first && !a.startsWith("@?") && !a.equals("@")) {
                 String name = a.substring(1);
                 Coord replace = positionVariables.get(name);
                 if (replace == null) {
                     throw new CommandException("Undefined position variable: " + a);
                 }
                 visitWorld(replace.w);
-                String r = "" + replace.x + "," + replace.y + "," + replace.z;
+                String r = replace.x + "," + replace.y + "," + replace.z;
                 cleanedArgs.add(r);
             } else {
                 cleanedArgs.add(a);
@@ -322,7 +313,7 @@ public class FZDSCommand extends CommandBase {
         if (cmd.needCoord && cmd.user == null) {
             throw new CommandException("No coordinate specified");
         }
-        if (cmd.needOp && cmd.op == false && !Core.dev_environ) {
+        if (cmd.needOp && !cmd.op && !Core.dev_environ) {
             throw new CommandException("Insufficient permissions");
         }
         if (cmd.needSelection && cmd.selected == null) {
@@ -330,36 +321,35 @@ public class FZDSCommand extends CommandBase {
         }
         cmd.arg0 = cleanedArgs.remove(0);
         try {
-            String[] sc = new String[cleanedArgs.size()];
-            cmd.call(cleanedArgs.toArray(sc));
+            cmd.call(cleanedArgs.toArray(new String[0]));
         } finally {
             cmd.reset();
         }
     }
     
     static String join(ArrayList<SubCommand> cmd) {
-        String ret = " ";
+        StringBuilder ret = new StringBuilder(" ");
         boolean first = true;
         for (SubCommand sc : cmd) {
             if (!first) {
-                ret += "\n";
+                ret.append("\n");
             }
             first = false;
-            ret += EnumChatFormatting.GREEN;
+            ret.append(EnumChatFormatting.GREEN);
             if (sc.help.length == 1) {
-                ret += sc.help[0];
+                ret.append(sc.help[0]);
             } else {
-                ret += sc.help[0];
+                ret.append(sc.help[0]);
                 for (int i = 1; i < sc.help.length; i++) {
-                    ret += " " + sc.help[i];
+                    ret.append(" ").append(sc.help[i]);
                 }
             }
-            ret += EnumChatFormatting.RESET + ": " + sc.details();
+            ret.append(EnumChatFormatting.RESET).append(": ").append(sc.details());
         }
-        return ret;
+        return ret.toString();
     }
     
-    static HashMap<String, Coord> positionVariables = new HashMap<String, Coord>(); //NOTE: This keeps references to worlds. Oh well.
+    static HashMap<String, Coord> positionVariables = new HashMap<>(); //NOTE: This keeps references to worlds. Oh well.
     
     static {
         help = add(new SubCommand("help", "[subcmd]+") {
@@ -387,7 +377,7 @@ public class FZDSCommand extends CommandBase {
                 if (any) {
                     return;
                 }
-                ArrayList<SubCommand> good = new ArrayList<FZDSCommand.SubCommand>();
+                ArrayList<SubCommand> good = new ArrayList<>();
                 for (SubCommand sc : subCommands) {
                     if (sc != this) {
                         sc.setup(sender);
@@ -501,19 +491,17 @@ public class FZDSCommand extends CommandBase {
                     new Notice(upper, "High").send(player);
                 }
                 
-                IDeltaChunk dse = DeltaChunk.makeSlice(Hammer.fzds_command_channel, lower, upper, new AreaMap() {
-                    @Override
-                    public void fillDse(DseDestination destination) {
-                        Coord here = user.copy();
-                        for (int x = lower.x; x <= upper.x; x++) {
-                            for (int y = lower.y; y <= upper.y; y++) {
-                                for (int z = lower.z; z <= upper.z; z++) {
-                                    here.set(here.w, x, y, z);
-                                    destination.include(here);
-                                }
+                IDeltaChunk dse = DeltaChunk.makeSlice(Hammer.fzds_command_channel, lower, upper, destination -> {
+                    Coord here = user.copy();
+                    for (int x = lower.x; x <= upper.x; x++) {
+                        for (int y = lower.y; y <= upper.y; y++) {
+                            for (int z = lower.z; z <= upper.z; z++) {
+                                here.set(here.w, x, y, z);
+                                destination.include(here);
                             }
                         }
-                    }}, !copy);
+                    }
+                }, !copy);
                 dse.loadUsualCapabilities();
                 dse.worldObj.spawnEntityInWorld(dse);
                 setSelection(dse);
@@ -554,19 +542,17 @@ public class FZDSCommand extends CommandBase {
                 max.y = 0xFF;
                 final Coord lower = min.copy();
                 final Coord upper = max.copy();
-                IDeltaChunk dse = DeltaChunk.makeSlice(Hammer.fzds_command_channel, lower, upper, new AreaMap() {
-                    @Override
-                    public void fillDse(DseDestination destination) {
-                        Coord here = user.copy();
-                        for (int x = lower.x; x <= upper.x; x++) {
-                            for (int y = lower.y; y <= upper.y; y++) {
-                                for (int z = lower.z; z <= upper.z; z++) {
-                                    here.set(here.w, x, y, z);
-                                    destination.include(here);
-                                }
+                IDeltaChunk dse = DeltaChunk.makeSlice(Hammer.fzds_command_channel, lower, upper, destination -> {
+                    Coord here = user.copy();
+                    for (int x = lower.x; x <= upper.x; x++) {
+                        for (int y = lower.y; y <= upper.y; y++) {
+                            for (int z = lower.z; z <= upper.z; z++) {
+                                here.set(here.w, x, y, z);
+                                destination.include(here);
                             }
                         }
-                    }}, true);
+                    }
+                }, true);
                 dse.loadUsualCapabilities();
                 dse.worldObj.spawnEntityInWorld(dse);
                 setSelection(dse);
@@ -599,9 +585,7 @@ public class FZDSCommand extends CommandBase {
                 Coord base = new Coord(user.w, 0, 0, 0);
                 Coord low = base.add(DeltaCoord.parse(args[0]));
                 Coord up = base.add(DeltaCoord.parse(args[1]));
-                AreaMap do_nothing = new AreaMap() {
-                    @Override public void fillDse(DseDestination destination) { }
-                };
+                AreaMap do_nothing = destination -> { };
                 IDeltaChunk dse = DeltaChunk.makeSlice(Hammer.fzds_command_channel, low, up, do_nothing, false);
                 dse.permit(DeltaCapability.ORACLE);
                 dse.forbid(DeltaCapability.COLLIDE);
@@ -632,7 +616,7 @@ public class FZDSCommand extends CommandBase {
             void call(String[] args) {
                 int i = 0;
                 for (World w : MinecraftServer.getServer().worldServers) {
-                    for (Entity ent : (List<Entity>)w.loadedEntityList) {
+                    for (Entity ent : w.loadedEntityList) {
                         if (ent instanceof DimensionSliceEntity) {
                             ent.setDead();
                             i++;
@@ -668,7 +652,7 @@ public class FZDSCommand extends CommandBase {
             @Override
             void call(String[] args) {
                 boolean add = arg0.equals("+");
-                ArrayList<List<Entity>> entityLists = new ArrayList();
+                ArrayList<List<Entity>> entityLists = new ArrayList<>();
                 for (World world : MinecraftServer.getServer().worldServers) {
                     if (world.isRemote) continue;
                     entityLists.add(world.loadedEntityList);
@@ -678,8 +662,7 @@ public class FZDSCommand extends CommandBase {
                 boolean found_current = false;
                 for (Entity ent : Iterables.concat(entityLists)) {
                     if (!(ent instanceof IDeltaChunk)) continue;
-                    IDeltaChunk here = (IDeltaChunk) ent;
-                    last = here;
+                    last = (IDeltaChunk) ent;
                     if (first == null) {
                         first = last;
                     }
@@ -733,17 +716,14 @@ public class FZDSCommand extends CommandBase {
             String details() { return "Destroys the selection and everything attatched, unless 'part' is given"; }
             @Override
             void call(String[] args) {
-                boolean recursive = true;
-                if (args.length == 1 && args[0].equalsIgnoreCase("part")) {
-                    recursive = false;
-                }
-                HashSet<IDeltaChunk> toKill = new HashSet<IDeltaChunk>();
+                boolean recursive = args.length != 1 || !args[0].equalsIgnoreCase("part");
+                HashSet<IDeltaChunk> toKill = new HashSet<>();
                 toKill.add(selected);
                 if (recursive) {
                     boolean any = true;
                     while (any) {
                         any = false;
-                        ArrayList<IDeltaChunk> toAdd = new ArrayList<IDeltaChunk>();
+                        ArrayList<IDeltaChunk> toAdd = new ArrayList<>();
                         for (IDeltaChunk idc : toKill) {
                             IDeltaChunk parent = idc.getParent();
                             if (parent != null) toAdd.add(parent);
@@ -1102,19 +1082,9 @@ public class FZDSCommand extends CommandBase {
                 low.y = upr.y;
                 int biomeId = Integer.parseInt(args[2]);
                 final BiomeGenBase biome = BiomeGenBase.getBiome(biomeId);
-                Coord.iterateCube(low, upr, new ICoordFunction() {
-                    @Override
-                    public void handle(Coord here) {
-                        here.setBiome(biome);
-                    }
-                });
+                Coord.iterateCube(low, upr, here -> here.setBiome(biome));
 
-                Coord.iterateChunks(low, upr, new ICoordFunction() {
-                    @Override
-                    public void handle(Coord here) {
-                        here.resyncChunksFull();
-                    }
-                });
+                Coord.iterateChunks(low, upr, Coord::resyncChunksFull);
             }
         }, Requires.CREATIVE, Requires.PLAYER);
     }
@@ -1126,11 +1096,6 @@ public class FZDSCommand extends CommandBase {
             Core.logSevere("DSE's area doesn't have the worlds set? Can't wipe its area. " + idc);
             return;
         }
-        Coord.iterateCube(a, b, new ICoordFunction() {
-            @Override
-            public void handle(Coord here) {
-                here.setAir();
-            }
-        });
+        Coord.iterateCube(a, b, Coord::setAir);
     }
 }

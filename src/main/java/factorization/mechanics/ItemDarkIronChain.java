@@ -206,7 +206,7 @@ public class ItemDarkIronChain extends ItemFactorization {
     }
 
     @Override
-    protected void addExtraInformation(ItemStack is, EntityPlayer player, List list, boolean verbose) {
+    protected void addExtraInformation(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {
         if (!Core.dev_environ) return;
         Coord real = loadPos(is, "real");
         Coord shadow = loadPos(is, "shadow");

@@ -1,9 +1,12 @@
 package factorization.misc;
 
-import java.text.DateFormat;
-import java.util.*;
-
-import factorization.api.ICoordFunction;
+import cpw.mods.fml.client.registry.ClientRegistry;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.Phase;
+import factorization.api.Coord;
+import factorization.common.FzConfig;
 import factorization.util.FzUtil;
 import factorization.util.ItemUtil;
 import factorization.util.PlayerUtil;
@@ -18,14 +21,10 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.*;
 import net.minecraft.world.World;
-import cpw.mods.fml.client.registry.ClientRegistry;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent;
-import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent;
-import cpw.mods.fml.common.gameevent.TickEvent.Phase;
-import factorization.api.Coord;
-import factorization.common.FzConfig;
 import net.minecraft.world.chunk.Chunk;
+
+import java.text.DateFormat;
+import java.util.*;
 
 public class MiscClientTickHandler {
     private final Minecraft mc = Minecraft.getMinecraft();
@@ -86,7 +85,7 @@ public class MiscClientTickHandler {
         }
         MovingObjectPosition mop = mc.objectMouseOver;
         if (mop == null) return;
-        List<ItemStack> validItems = new ArrayList<ItemStack>();
+        List<ItemStack> validItems = new ArrayList<>();
         int slot = player.inventory.currentItem;
         if (swaps.length != InventoryPlayer.getHotbarSize()) {
             swaps = new ItemStack[InventoryPlayer.getHotbarSize()];
@@ -117,10 +116,8 @@ public class MiscClientTickHandler {
         }
 
         final ItemStack held = player.getHeldItem();
-        for (Iterator<ItemStack> it = validItems.iterator(); it.hasNext(); ) {
-            // Don't match items that you're holding.
-            if (ItemUtil.identical(it.next(), held)) it.remove();
-        }
+        // Don't match items that you're holding.
+        validItems.removeIf(stack -> ItemUtil.identical(stack, held));
         if (validItems.isEmpty()) return;
 
         int firstEmpty = -1;
@@ -263,28 +260,25 @@ public class MiscClientTickHandler {
         if (world == null || world.loadedEntityList == null) return;
         if (!chunkChanged()) return;
         int d = 16 * 3 / 2;
-        final HashSet<Entity> properly_known_entities = new HashSet<Entity>();
+        final HashSet<Entity> properly_known_entities = new HashSet<>();
         Coord at = new Coord(mc.thePlayer);
-        Coord.iterateChunks(at.add(-d, -d, -d), at.add(d, d, d), new ICoordFunction() {
-            @Override
-            public void handle(Coord here) {
-                final Chunk chunk = here.getChunk();
-                if (chunk == null) return;
-                for (List l : chunk.entityLists) {
-                    if (l == null) continue;
-                    properly_known_entities.addAll((Collection<Entity>) l);
-                }
+        Coord.iterateChunks(at.add(-d, -d, -d), at.add(d, d, d), here -> {
+            final Chunk chunk = here.getChunk();
+            if (chunk == null) return;
+            for (List<Entity> l : chunk.entityLists) {
+                if (l == null) continue;
+                properly_known_entities.addAll(l);
             }
         });
         nextEntity:
-        for (Entity ent : (Iterable<Entity>) world.loadedEntityList) {
+        for (Entity ent : world.loadedEntityList) {
             int ecx = MathHelper.floor_double(ent.posX / 16.0D);
             int ecz = MathHelper.floor_double(ent.posZ / 16.0D);
             int dx = (last_chunk_x - ecx);
             int dz = (last_chunk_z - ecz);
             int dSq = dx * dx + dz * dz;
             boolean near = dSq <= 4;
-            if (!near) continue nextEntity;
+            if (!near) continue;
 
             Chunk chunk = world.getChunkFromChunkCoords(ecx, ecz);
             if (chunk.entityLists[ent.chunkCoordY].size() < 16) {
@@ -292,7 +286,7 @@ public class MiscClientTickHandler {
                     if (e == ent) continue nextEntity;
                 }
             } else if (properly_known_entities.contains(ent)) {
-                continue nextEntity;
+                continue;
             }
             chunk.addEntity(ent);
         }

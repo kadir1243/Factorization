@@ -70,7 +70,7 @@ public class ItemGoo extends ItemFactorization {
         if (player.isSneaking()) {
             if (data == null) return false;
             ForgeDirection fd = ForgeDirection.getOrientation(side);
-            ArrayList<Integer> toRemove = new ArrayList();
+            ArrayList<Integer> toRemove = new ArrayList<>();
             for (int i = 0; i < data.coords.length; i += 3) {
                 data.coords[i + 0] = data.coords[i + 0] + fd.offsetX;
                 int goo_y = data.coords[i + 1] = data.coords[i + 1] + fd.offsetY;
@@ -137,17 +137,14 @@ public class ItemGoo extends ItemFactorization {
                 int iz = data.coords[i + 2];
                 if (ix == mop.blockX && iy == mop.blockY && iz == mop.blockZ) {
                     final FzInv playerInv = InvUtil.openInventory(player, true);
-                    DropCaptureHandler.startCapture(new ICaptureDrops() {
-                        @Override
-                        public boolean captureDrops(ArrayList<ItemStack> stacks) {
-                            boolean any = false;
-                            for (ItemStack is : stacks) {
-                                if (ItemUtil.normalize(is) == null) continue;
-                                is.stackSize = ItemUtil.getStackSize(playerInv.push(is.copy()));
-                                any = true;
-                            }
-                            return any;
+                    DropCaptureHandler.startCapture(stacks -> {
+                        boolean any = false;
+                        for (ItemStack is1 : stacks) {
+                            if (ItemUtil.normalize(is1) == null) continue;
+                            is1.stackSize = ItemUtil.getStackSize(playerInv.push(is1.copy()));
+                            any = true;
                         }
+                        return any;
                     }, new Coord(player), Double.MAX_VALUE);
                     try {
                         if (command == Command.gooLeftClick) {
@@ -232,7 +229,7 @@ public class ItemGoo extends ItemFactorization {
     
     private void expandSelection(ItemStack is, GooData data, EntityPlayer player, World world, int x, int y, int z, ForgeDirection dir) {
         Coord src = new Coord(world, x, y, z);
-        HashSet<Coord> found = new HashSet();
+        HashSet<Coord> found = new HashSet<>();
         for (int i = 0; i < data.coords.length; i += 3) {
             int ix = data.coords[i + 0];
             int iy = data.coords[i + 1];
@@ -256,7 +253,7 @@ public class ItemGoo extends ItemFactorization {
                 }
             }
         }
-        ArrayList<Coord> addable = new ArrayList();
+        ArrayList<Coord> addable = new ArrayList<>();
         nextCoord: for (Coord c : found) {
             for (int i = 0; i < data.coords.length; i += 3) {
                 int ix = data.coords[i + 0];
@@ -296,11 +293,10 @@ public class ItemGoo extends ItemFactorization {
         if (player.worldObj.isRemote) return false;
         if (data == null) return false;
         if (mop == null || mop.typeOfHit != MovingObjectPosition.MovingObjectType.BLOCK) return false;
-        int d = radius;
         boolean any = false;
-        for (int dx = -d; dx <= d; dx++) {
-            for (int dy = -d; dy <= d; dy++) {
-                for (int dz = -d; dz <= d; dz++) {
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
                     any |= deselectCoord(gooItem, data, player.worldObj, mop.blockX + dx, mop.blockY + dy, mop.blockZ + dz, false);
                 }
             }
@@ -316,7 +312,7 @@ public class ItemGoo extends ItemFactorization {
         int removed = 0;
         Coord at = new Coord(world, 0, 0, 0);
         boolean creative = player.capabilities.isCreativeMode;
-        ArrayList<Integer> to_remove = new ArrayList();
+        ArrayList<Integer> to_remove = new ArrayList<>();
         for (int i = 0; i < data.coords.length; i += 3) {
             if (source.stackSize <= 0) {
                 for (ItemStack replace : player.inventory.mainInventory) {
@@ -390,7 +386,7 @@ public class ItemGoo extends ItemFactorization {
     private void mineSelection(ItemStack is, GooData data, World world, MovingObjectPosition mop, EntityPlayerMP player, ItemStack tool) {
         boolean creative = player.capabilities.isCreativeMode;
         Item toolItem = creative ? null : tool.getItem();
-        ArrayList<Integer> toRemove = new ArrayList();
+        ArrayList<Integer> toRemove = new ArrayList<>();
         int removed = 0;
         float origHardness = Float.POSITIVE_INFINITY; // creative ? Float.POSITIVE_INFINITY : new Coord(world, mop).getHardness();
         for (int i = 0; i < data.coords.length; i += 3) {
@@ -472,7 +468,7 @@ public class ItemGoo extends ItemFactorization {
     }
     
     @Override
-    protected void addExtraInformation(ItemStack is, EntityPlayer player, List list, boolean verbose) {
+    protected void addExtraInformation(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {
         super.addExtraInformation(is, player, list, verbose);
         GooData data = GooData.getNullGooData(is, player.worldObj);
         if (data != null) {
@@ -602,7 +598,7 @@ public class ItemGoo extends ItemFactorization {
     }
     
     
-    ThreadLocal<Boolean> processing = new ThreadLocal<Boolean>();
+    ThreadLocal<Boolean> processing = new ThreadLocal<>();
     
     @SubscribeEvent
     public void mineGooeyBlocks(BreakEvent event) {

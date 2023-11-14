@@ -7,7 +7,7 @@ public class WindModel {
     private static final IWindModel default_model = new DefaultWindModel();
     public static IWindModel activeModel = default_model;
     public static final String userModelChoice = readConfig();
-    public static final Map<String, IWindModel> models = new HashMap<String, IWindModel>();
+    public static final Map<String, IWindModel> models = new HashMap<>();
     private static int best = -1;
 
     /**

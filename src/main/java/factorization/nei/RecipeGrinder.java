@@ -97,9 +97,9 @@ public class RecipeGrinder extends TemplateRecipeHandler {
         }
 
     }
-    
+
     @Override
-    public List<String> handleItemTooltip(GuiRecipe gui, ItemStack stack, List<String> currenttip, int recipe) {
+    public List<String> handleItemTooltip(GuiRecipe<?> gui, ItemStack stack, List<String> currenttip, int recipe) {
         if (stack == null) {
             return currenttip;
         }
@@ -146,7 +146,7 @@ public class RecipeGrinder extends TemplateRecipeHandler {
     }
     
     @Override
-    public List<String> handleTooltip(GuiRecipe gui, List<String> currenttip,
+    public List<String> handleTooltip(GuiRecipe<?> gui, List<String> currenttip,
             int recipe) {
         return currenttip;
     }

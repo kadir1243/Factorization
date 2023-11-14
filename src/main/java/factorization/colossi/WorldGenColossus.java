@@ -1,18 +1,13 @@
 package factorization.colossi;
 
-import static net.minecraftforge.common.BiomeDictionary.Type.*;
-import static net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.EventType.*;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Random;
-
+import cpw.mods.fml.common.IWorldGenerator;
+import cpw.mods.fml.common.eventhandler.Event.Result;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import factorization.api.Coord;
+import factorization.common.FzConfig;
 import factorization.fzds.DeltaChunk;
+import factorization.shared.Core;
 import factorization.util.NumUtil;
-import gnu.trove.impl.hash.TIntByteHash;
-import gnu.trove.impl.hash.TIntHash;
-import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.hash.TIntByteHashMap;
 import net.minecraft.block.material.Material;
 import net.minecraft.tileentity.TileEntity;
@@ -30,13 +25,14 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.terraingen.DecorateBiomeEvent.Decorate;
 import net.minecraftforge.event.terraingen.InitNoiseGensEvent;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent;
-import cpw.mods.fml.common.IWorldGenerator;
-import cpw.mods.fml.common.eventhandler.Event.Result;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import factorization.api.Coord;
-import factorization.common.FzConfig;
-import factorization.shared.Core;
 import net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.EventType;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Random;
+
+import static net.minecraftforge.common.BiomeDictionary.Type.*;
+import static net.minecraftforge.event.terraingen.PopulateChunkEvent.Populate.EventType.*;
 
 public class WorldGenColossus implements IWorldGenerator {
     {
@@ -55,7 +51,7 @@ public class WorldGenColossus implements IWorldGenerator {
     static final double SMOOTH_END_FUZZ = SMOOTH_END + 32;
     static {
         if (GENERATION_START_X > GENERATION_SPACING || GENERATION_START_Z > GENERATION_SPACING) {
-            throw new IllegalArgumentException("colossus spacing must be at least " + Math.max(GENERATION_START_X, GENERATION_START_Z));
+            throw new IllegalArgumentException("colossus spacing must be at least " + GENERATION_START_X);
         }
     }
     static TIntByteHashMap dimensionBlacklist = new TIntByteHashMap();
@@ -91,7 +87,7 @@ public class WorldGenColossus implements IWorldGenerator {
     }
     
     public static ArrayList<Coord> getCandidatesNear(final Coord player, int chunkSearchDistance, boolean forceLoad) throws LocationException {
-        ArrayList<Coord> ret = new ArrayList<Coord>();
+        ArrayList<Coord> ret = new ArrayList<>();
         ChunkCoordIntPair chunkAt = player.getChunk().getChunkCoordIntPair();
         for (int dx = -chunkSearchDistance; dx <= chunkSearchDistance; dx++) {
             for (int dz = -chunkSearchDistance; dz <= chunkSearchDistance; dz++) {
@@ -122,7 +118,7 @@ public class WorldGenColossus implements IWorldGenerator {
                     }
                     Coord at = new Coord(chunk);
                     at.getBlock();
-                    for (TileEntity te : (Iterable<TileEntity>)chunk.chunkTileEntityMap.values()) {
+                    for (TileEntity te : chunk.chunkTileEntityMap.values()) {
                         if (te instanceof TileEntityColossalHeart) {
                             ret.add(new Coord(te));
                             break;
@@ -134,12 +130,7 @@ public class WorldGenColossus implements IWorldGenerator {
                 }
             }
         }
-        Collections.sort(ret, new Comparator<Coord>() {
-            @Override
-            public int compare(Coord a, Coord b) {
-                return player.distanceSq(a) - player.distanceSq(b);
-            }
-        });
+        ret.sort(Comparator.comparingInt(player::distanceSq));
         return ret;
     }
     
@@ -300,7 +291,6 @@ public class WorldGenColossus implements IWorldGenerator {
             if (cancel(event.world, event.chunkX / 16, event.chunkZ / 16)) {
                 event.setResult(Result.DENY);
             }
-            return;
         }
     }
     

@@ -31,9 +31,9 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
         instance.recipeCategories = null;
     }
 
-    HashMap<String, ArrayList<ArrayList>> recipeCategories = null;
-    HashMap<String, IObjectWriter<Object>> guiders = new HashMap<String, IObjectWriter<Object>>();
-    ArrayList<String> categoryOrder = new ArrayList<String>();
+    Map<String, List<List<Object>>> recipeCategories = null;
+    HashMap<String, IObjectWriter<Object>> guiders = new HashMap<>();
+    List<String> categoryOrder = new ArrayList<>();
     
     /** USAGE
      * recipe/
@@ -57,7 +57,7 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
         StandardObjectWriters.setup();
         if (recipeCategories == null || Boolean.getBoolean("fz.forceRecipeRefresh")) {
             categoryOrder.clear();
-            recipeCategories = new HashMap<String, ArrayList<ArrayList>>();
+            recipeCategories = new HashMap<>();
             Core.logInfo("Loading recipe list");
             loadRecipes();
             Core.logInfo("Done");
@@ -70,13 +70,12 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
         } else if (arg.startsWith("category/")) {
             String cat = arg.replace("category/", "");
             if (recipeCategories.containsKey(cat)) {
-                ArrayList<ArrayList> recipeList = recipeCategories.get(cat);
-                writeRecipes(out, null, false, cat, recipeList, null);
+                writeRecipes(out, null, false, cat, recipeCategories.get(cat), null);
             } else {
                 throw new TruthError("Category not found: " + arg);
             }
         } else {
-            ArrayList<ItemStack> matchers = null;
+            List<ItemStack> matchers = null;
             boolean mustBeResult = false;
             if (!arg.equalsIgnoreCase("all")) {
                 if (arg.startsWith("for/")) {
@@ -84,7 +83,7 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
                     arg = arg.replace("for/", "");
                 }
                 matchers = DocumentationModule.getNameItemCache().get(arg);
-                if (matchers == null || matchers.size() == 0) {
+                if (matchers == null || matchers.isEmpty()) {
                     throw new TruthError("Couldn't find item: " + arg);
                 }
                 //out.emitWord(new ItemWord(matching));
@@ -92,13 +91,13 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
             }
 
             if (matchers == null) {
-                matchers = new ArrayList<ItemStack>();
+                matchers = new ArrayList<>();
                 matchers.add(null);
             }
-            HashSet<ArrayList> previously_found = new HashSet<ArrayList>();
+            Set<List<Object>> previously_found = new HashSet<>();
             for (ItemStack matching : matchers) {
                 for (String cat : categoryOrder) {
-                    ArrayList<ArrayList> recipeList = recipeCategories.get(cat);
+                    List<List<Object>> recipeList = recipeCategories.get(cat);
                     int got = writeRecipes(out, matching, mustBeResult, cat, recipeList, previously_found);
                     if (got > 0) out.write("\\nl");
                 }
@@ -107,16 +106,16 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
         }
     }
     
-    int writeRecipes(ITypesetter out, ItemStack matching, boolean mustBeResult, String categoryName, ArrayList<ArrayList> recipes, HashSet<ArrayList> previously_found) throws TruthError {
+    int writeRecipes(ITypesetter out, ItemStack matching, boolean mustBeResult, String categoryName, List<List<Object>> recipes, Set<List<Object>> previously_found) throws TruthError {
         int got = 0;
         if (matching == null) {
-            for (ArrayList recipe : recipes) {
+            for (List<Object> recipe : recipes) {
                 writeRecipe(out, recipe);
                 got++;
             }
         } else {
             boolean first = true;
-            for (ArrayList recipe : recipes) {
+            for (List<Object> recipe : recipes) {
                 if (recipeMatches(recipe, matching, mustBeResult)) {
                     if (previously_found != null && !previously_found.add(recipe)) continue;
                     if (first) {
@@ -133,10 +132,9 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
         return got;
     }
     
-    boolean recipeMatches(ArrayList recipe, ItemStack matching, boolean mustBeResult) {
+    boolean recipeMatches(List<Object> recipe, ItemStack matching, boolean mustBeResult) {
         for (Object part : recipe) {
-            if (part instanceof ItemWord) {
-                ItemWord iw = (ItemWord) part;
+            if (part instanceof ItemWord iw) {
                 if (iw.is != null) {
                     /*if (ItemUtil.identical(iw.is, matching) || ItemUtil.wildcardSimilar(iw.is, matching)) {
                         return true;
@@ -160,7 +158,7 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
         return false;
     }
     
-    void writeRecipe(ITypesetter out, ArrayList parts) {
+    void writeRecipe(ITypesetter out, List<Object> parts) {
         if (parts.isEmpty()) return;
         try {
             out.write("\\seg");
@@ -192,13 +190,13 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
         String key = cmd[0];
         String className = cmd[1];
         String fieldName = cmd[2];
-        Class kl = RecipeViewer.class.getClassLoader().loadClass(className);
+        Class<?> kl = RecipeViewer.class.getClassLoader().loadClass(className);
         Field field = kl.getField(fieldName);
         Object obj = field.get(null);
         if (!(obj instanceof Iterable)) {
             String[] getter_names = new String[] {"getRecipes", "recipes", "allRecipes", "getAllRecipes"};
             Object found = null;
-            Class cl = obj.getClass();
+            Class<?> cl = obj.getClass();
             for (String name : getter_names) {
                 try {
                     Method getter = cl.getMethod(name);
@@ -212,11 +210,11 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
                 obj = found;
             }
         }
-        if (obj instanceof Map) {
-            obj = ((Map) obj).entrySet();
+        if (obj instanceof Map<?, ?> map) {
+            obj = map.entrySet();
         }
-        if (obj instanceof Iterable) {
-            DocReg.registerRecipeList(key, (Iterable) obj);
+        if (obj instanceof Iterable<?> iterable) {
+            DocReg.registerRecipeList(key, iterable);
         } else {
             Core.logWarning("Unable to load recipe list provided by IMC message, obtained object is neither Iterable nor Map: " + msg);
         }
@@ -225,18 +223,18 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
     void loadRecipes() {
         putCategory("Workbench", CraftingManager.getInstance().getRecipeList());
         putCategory("Furnace", FurnaceRecipes.smelting().getSmeltingList().entrySet());
-        HashMap ores = new HashMap();
+        Map<String, List<ItemStack>> ores = new HashMap<>();
         for (String name : OreDictionary.getOreNames()) {
             ores.put("\"" + name + "\"", OreDictionary.getOres(name));
         }
         putCategory("Ore Dictionary", ores.entrySet());
         
-        for (Entry<String, Iterable> entry : DocReg.customRecipes.entrySet()) {
+        for (Entry<String, Iterable<?>> entry : DocReg.customRecipes.entrySet()) {
             putCategory(entry.getKey(), entry.getValue());
         }
     }
     
-    void putCategory(String label, Iterable list) {
+    void putCategory(String label, Iterable<?> list) {
         try {
             IObjectWriter<Object> guide = guiders.get(label);
             if (guide == null) guide = this;
@@ -248,10 +246,10 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
     }
     
     int recursion;
-    private ArrayList<ArrayList> addAll(IObjectWriter<Object> guide, Iterable list) {
-        ArrayList<ArrayList> generated = new ArrayList<ArrayList>();
+    private List<List<Object>> addAll(IObjectWriter<Object> guide, Iterable<?> list) {
+        List<List<Object>> generated = new ArrayList<>();
         for (Object obj : list) {
-            ArrayList entry = new ArrayList();
+            List<Object> entry = new ArrayList<>();
             recursion = 0;
             guide.writeObject(entry, obj, this);
             if (!entry.isEmpty()) {
@@ -274,7 +272,7 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
     static int MAX_RECURSION = 5;
 
     @Override
-    public void writeObject(List out, Object val, IObjectWriter<Object> generic) {
+    public void writeObject(List<Object> out, Object val, IObjectWriter<Object> generic) {
         if (recursion > MAX_RECURSION) return;
         recursion++;
         try {
@@ -284,7 +282,7 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
         }
     }
 
-    public void addRecipe(List out, Object obj) {
+    public void addRecipe(List<Object> out, Object obj) {
         if (obj instanceof IRecipe) {
             genericRecipePrefix(out, (IRecipe) obj);
         }
@@ -296,12 +294,12 @@ public class RecipeViewer implements IDocGenerator, IObjectWriter<Object> {
         }
     }
     
-    public static Object genericRecipePrefix(List sb, IRecipe recipe) {
+    public static Object genericRecipePrefix(List<Object> sb, IRecipe recipe) {
         ItemStack output = recipe.getRecipeOutput();
         return genericRecipePrefix(sb, output);
     }
 
-    public static ItemStack genericRecipePrefix(List sb, ItemStack output) {
+    public static ItemStack genericRecipePrefix(List<Object> sb, ItemStack output) {
         if (output == null) return null;
         if (output.getItem() == null) return null;
         sb.add(new ItemWord(output));

@@ -32,18 +32,16 @@ public class Compare extends Instruction {
             }
         }
         
-        boolean apply(Comparable a, Comparable b) {
-            @SuppressWarnings("unchecked")
+        private <T> boolean apply(Comparable<Comparable<T>> a, Comparable<T> b) {
             int cmp = (int) Math.signum(a.compareTo(b));
-            switch (this) {
-            default:
-            case EQ: return cmp == 0;
-            case NE: return cmp != 0;
-            case GE: return cmp >= 0;
-            case GT: return cmp > 0;
-            case LE: return cmp <= 0;
-            case LT: return cmp < 0;
-            }
+            return switch (this) {
+                default -> cmp == 0;
+                case NE -> cmp != 0;
+                case GE -> cmp >= 0;
+                case GT -> cmp > 0;
+                case LE -> cmp <= 0;
+                case LT -> cmp < 0;
+            };
         }
     }
     
@@ -73,11 +71,11 @@ public class Compare extends Instruction {
             motor.putError("CMP: Stack underflow of type: " + a.getClass());
             return;
         }
-        if (!(a instanceof Comparable)) {
+        if (!(a instanceof Comparable<?> bC)) {
             motor.putError("CMP: Not Comparable: " + a.getClass());
             return;
         }
-        ss.push(cmp.apply((Comparable)a, (Comparable)b));
+        ss.push(cmp.apply((Comparable)a, bC));
     }
 
     @Override

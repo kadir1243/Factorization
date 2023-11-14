@@ -72,10 +72,9 @@ public class BlockFactorization extends BlockContainer {
     @Override
     public boolean isBlockSolid(IBlockAccess world, int x, int y, int z, int side) {
         TileEntity t = world.getTileEntity(x, y, z);
-        if (t == null || !(t instanceof TileEntityCommon)) {
+        if (!(t instanceof TileEntityCommon te)) {
             return false;
         }
-        TileEntityCommon te = (TileEntityCommon) t;
         return te.isBlockSolidOnSide(side);
     }
     
@@ -87,8 +86,7 @@ public class BlockFactorization extends BlockContainer {
     @Override
     public void onNeighborBlockChange(World w, int x, int y, int z, Block neighbor) {
         TileEntity te = w.getTileEntity(x, y, z);
-        if (te instanceof TileEntityCommon) {
-            TileEntityCommon tec = (TileEntityCommon) te;
+        if (te instanceof TileEntityCommon tec) {
             tec.neighborChanged(neighbor);
         }
     }
@@ -152,8 +150,7 @@ public class BlockFactorization extends BlockContainer {
             return force_texture;
         }
         TileEntity te = w.getTileEntity(x, y, z);
-        if (te instanceof TileEntityCommon) {
-            TileEntityCommon tec = (TileEntityCommon) te;
+        if (te instanceof TileEntityCommon tec) {
             return tec.getIcon(ForgeDirection.getOrientation(side));
         }
         return BlockIcons.error;
@@ -192,7 +189,7 @@ public class BlockFactorization extends BlockContainer {
         return 1;
     }
     
-    LinkedList<TileEntityCommon> destroyed_tes = new LinkedList<TileEntityCommon>();
+    LinkedList<TileEntityCommon> destroyed_tes = new LinkedList<>();
     
     @Override
     public void breakBlock(World w, int x, int y, int z, Block id, int md) {
@@ -231,7 +228,7 @@ public class BlockFactorization extends BlockContainer {
 
     @Override
     public ArrayList<ItemStack> getDrops(World world, int X, int Y, int Z, int md, int fortune) {
-        ArrayList<ItemStack> ret = new ArrayList<ItemStack>();
+        ArrayList<ItemStack> ret = new ArrayList<>();
         Coord here = new Coord(world, X, Y, Z);
         TileEntityCommon f = here.getTE(TileEntityCommon.class);
         if (f == null) {
@@ -262,13 +259,13 @@ public class BlockFactorization extends BlockContainer {
         return ret;
     }
 
-    private static void put(List itemList, ItemStack item) {
+    private static void put(List<ItemStack> itemList, ItemStack item) {
         if (item == null) return;
         itemList.add(item);
     }
     
     @Override
-    public void getSubBlocks(Item me, CreativeTabs tab, List itemList) {
+    public void getSubBlocks(Item me, CreativeTabs tab, List<ItemStack> itemList) {
         if (this != Core.registry.factory_block) {
             return;
         }
@@ -330,8 +327,8 @@ public class BlockFactorization extends BlockContainer {
             Calendar cal = Calendar.getInstance();
             int doy = cal.get(Calendar.DAY_OF_YEAR) - 1 /* start at 0, not 1 */;
 
-            ReservoirSampler<ItemStack> barrelPool = new ReservoirSampler<ItemStack>(1, new Random(doy));
-            todaysBarrels = new ArrayList<ItemStack>();
+            ReservoirSampler<ItemStack> barrelPool = new ReservoirSampler<>(1, new Random(doy));
+            todaysBarrels = new ArrayList<>();
 
             for (ItemStack barrel : TileEntityDayBarrel.barrel_items) {
                 TileEntityDayBarrel.Type type = TileEntityDayBarrel.getUpgrade(barrel);
@@ -362,8 +359,7 @@ public class BlockFactorization extends BlockContainer {
     @Override
     public boolean canConnectRedstone(IBlockAccess world, int x, int y, int z, int dir) {
         TileEntity te = world.getTileEntity(x, y, z);
-        if (te instanceof TileEntityCommon) {
-            TileEntityCommon tec = (TileEntityCommon) te;
+        if (te instanceof TileEntityCommon tec) {
             return tec.getFactoryType().connectRedstone();
         }
         return false;
@@ -418,21 +414,19 @@ public class BlockFactorization extends BlockContainer {
     public MovingObjectPosition collisionRayTrace(World w, int x, int y, int z,
             Vec3 startVec, Vec3 endVec) {
         TileEntity te = w.getTileEntity(x, y, z);
-        if (!(te instanceof TileEntityCommon)) return super.collisionRayTrace(w, x, y, z, startVec, endVec);
-        TileEntityCommon tec = (TileEntityCommon) te;
+        if (!(te instanceof TileEntityCommon tec)) return super.collisionRayTrace(w, x, y, z, startVec, endVec);
         return tec.collisionRayTrace(startVec, endVec);
     }
 
     @Override
     public AxisAlignedBB getCollisionBoundingBoxFromPool(World w, int x, int y, int z) {
         TileEntity te = w.getTileEntity(x, y, z);
-        if (!(te instanceof TileEntityCommon)) return super.getCollisionBoundingBoxFromPool(w, x, y, z);
-        TileEntityCommon tec = (TileEntityCommon) te;
+        if (!(te instanceof TileEntityCommon tec)) return super.getCollisionBoundingBoxFromPool(w, x, y, z);
         return tec.getCollisionBoundingBoxFromPool();
     }
     
     @Override
-    public void addCollisionBoxesToList(World w, int x, int y, int z, AxisAlignedBB aabb, List list, Entity entity) {
+    public void addCollisionBoxesToList(World w, int x, int y, int z, AxisAlignedBB aabb, List<AxisAlignedBB> list, Entity entity) {
         TileEntity te = w.getTileEntity(x, y, z);
         TileEntityCommon tec = null;
         if (te instanceof TileEntityCommon) {
@@ -447,8 +441,7 @@ public class BlockFactorization extends BlockContainer {
     @Override
     public AxisAlignedBB getSelectedBoundingBoxFromPool(World w, int x, int y, int z) {
         TileEntity te = w.getTileEntity(x, y, z);
-        if (te instanceof TileEntityCommon) {
-            TileEntityCommon tec = (TileEntityCommon) te;
+        if (te instanceof TileEntityCommon tec) {
             if (tec.getFactoryType() == FactoryType.EXTENDED) {
                 AxisAlignedBB ret = tec.getCollisionBoundingBoxFromPool();
                 if (ret != null) {
@@ -462,7 +455,7 @@ public class BlockFactorization extends BlockContainer {
     @Override
     public void setBlockBoundsBasedOnState(IBlockAccess w, int x, int y, int z) {
         TileEntity te = w.getTileEntity(x, y, z);
-        if (te == null || !(te instanceof TileEntityCommon)) {
+        if (!(te instanceof TileEntityCommon)) {
             setBlockBounds(0, 0, 0, 1, 1, 1);
             return;
         }
@@ -497,8 +490,7 @@ public class BlockFactorization extends BlockContainer {
     @Override
     public void updateTick(World w, int x, int y, int z, Random rand) {
         TileEntity te = w.getTileEntity(x, y, z);
-        if (te instanceof TileEntityCommon) {
-            TileEntityCommon tec = (TileEntityCommon) te;
+        if (te instanceof TileEntityCommon tec) {
             tec.blockUpdateTick(this);
         }
     }
@@ -523,8 +515,7 @@ public class BlockFactorization extends BlockContainer {
     @SideOnly(Side.CLIENT)
     public void randomDisplayTick(World w, int x, int y, int z, Random rand) {
         TileEntity te = w.getTileEntity(x, y, z);
-        if (te instanceof TileEntityCommon) {
-            TileEntityCommon tec = (TileEntityCommon) te;
+        if (te instanceof TileEntityCommon tec) {
             tec.spawnDisplayTickParticles(rand);
         }
     }
@@ -562,10 +553,9 @@ public class BlockFactorization extends BlockContainer {
     @SideOnly(Side.CLIENT)
     public boolean addDestroyEffects(World world, int x, int y, int z, int meta, EffectRenderer effectRenderer) {
         TileEntity te = world.getTileEntity(x, y, z);
-        if (!(te instanceof TileEntityCommon)) {
+        if (!(te instanceof TileEntityCommon tec)) {
             return false;
         }
-        TileEntityCommon tec = (TileEntityCommon) te;
         IIcon theIIcon =  tec.getIcon(ForgeDirection.DOWN);
         
         //copied & modified from EffectRenderer.addDestroyEffects
@@ -627,10 +617,7 @@ public class BlockFactorization extends BlockContainer {
     @Override
     public boolean getBlocksMovement(IBlockAccess world, int x, int y, int z) {
         int md = world.getBlockMetadata(x, y, z);
-        if (md == BlockClass.Wire.md) {
-            return true;
-        }
-        return false;
+        return md == BlockClass.Wire.md;
     }
     
     @Override

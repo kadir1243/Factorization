@@ -9,27 +9,21 @@ import net.minecraftforge.common.ChestGenHooks;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Map;
 
 public class TreasureViewer implements IDocGenerator {
 
     @Override
     public void process(ITypesetter out, String arg) throws TruthError {
-        Map<String, ChestGenHooks> chestHooks = ReflectionHelper.<Map<String, ChestGenHooks>, ChestGenHooks>getPrivateValue(ChestGenHooks.class, null, "chestInfo");
-        ArrayList<String> names = new ArrayList<String>(chestHooks.keySet());
+        Map<String, ChestGenHooks> chestHooks = ReflectionHelper.getPrivateValue(ChestGenHooks.class, null, "chestInfo");
+        ArrayList<String> names = new ArrayList<>(chestHooks.keySet());
         Collections.sort(names);
         for (String chestName : names) {
             ChestGenHooks hook = chestHooks.get(chestName);
             ArrayList<WeightedRandomChestContent> content = ReflectionHelper.getPrivateValue(ChestGenHooks.class, hook, "contents");
             if (content == null || content.isEmpty()) continue;
-            content = new ArrayList<WeightedRandomChestContent>(content);
-            Collections.sort(content, new Comparator<WeightedRandomChestContent>() {
-                @Override
-                public int compare(WeightedRandomChestContent a, WeightedRandomChestContent b) {
-                    return b.itemWeight - a.itemWeight;
-                }
-            });
+            content = new ArrayList<>(content);
+            content.sort((a, b) -> b.itemWeight - a.itemWeight);
             out.write("\\newpage \\title{Treasure: " + chestName + "}");
             boolean can_blob = false;
             for (WeightedRandomChestContent item : content) {

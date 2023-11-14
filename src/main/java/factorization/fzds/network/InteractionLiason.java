@@ -13,7 +13,6 @@ import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.network.EnumConnectionState;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.ItemInWorldManager;
 import net.minecraft.world.WorldServer;
 
@@ -23,7 +22,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public class InteractionLiason extends EntityPlayerMP implements IFzdsShenanigans {
-    static final WeakHashMap<EntityPlayerMP, InteractionLiason> activeLiasons = new WeakHashMap<EntityPlayerMP, InteractionLiason>();
+    static final WeakHashMap<EntityPlayerMP, InteractionLiason> activeLiasons = new WeakHashMap<>();
 
     //private static final GameProfile liasonGameProfile = new GameProfile(null /*UUID.fromString("69f64f91-665e-457d-ad32-f6082d0b8a71")*/ , "[FzdsInteractionLiason]");
     // Using the real player's GameProfile for things like permissions checks.
@@ -35,9 +34,9 @@ public class InteractionLiason extends EntityPlayerMP implements IFzdsShenanigan
     private EmbeddedChannel proxiedChannel = new EmbeddedChannel(new LiasonHandler());
 
     public InteractionLiason(WorldServer world, ItemInWorldManager itemManager, EntityPlayerMP realPlayer, IDeltaChunk idc) {
-        super(MinecraftServer.getServer(), world, realPlayer.getGameProfile(), itemManager);
+        super(world.func_73046_m(/*getServer*/), world, realPlayer.getGameProfile(), itemManager);
         original_inventory = this.inventory;
-        realPlayerRef = new WeakReference<EntityPlayerMP>(realPlayer);
+        realPlayerRef = new WeakReference<>(realPlayer);
         initLiason();
         updateFromPlayerStatus();
     }
@@ -45,7 +44,7 @@ public class InteractionLiason extends EntityPlayerMP implements IFzdsShenanigan
     private void initLiason() {
         // We're fairly similar to PacketProxyingPlayer.initWrapping()
         networkManager = new CustomChannelNetworkManager(proxiedChannel, false);
-        this.playerNetServerHandler = new NetHandlerPlayServer(MinecraftServer.getServer(), networkManager, this);
+        this.playerNetServerHandler = new NetHandlerPlayServer(mcServer, networkManager, this);
         playerNetServerHandler.netManager.channel().attr(NetworkDispatcher.FML_DISPATCHER).set(new NetworkDispatcher(networkManager));
         //Compare cpw.mods.fml.common.network.FMLOutboundHandler.OutboundTarget.PLAYER.{...}.selectNetworks(Object, ChannelHandlerContext, FMLProxyPacket)
         playerNetServerHandler.netManager.setConnectionState(EnumConnectionState.PLAY);
@@ -119,7 +118,7 @@ public class InteractionLiason extends EntityPlayerMP implements IFzdsShenanigan
     private class LiasonHandler extends ChannelOutboundHandlerAdapter implements IFzdsShenanigans {
         // See PacketProxyingPlayer.WrappedMulticastHandler
         @Override
-        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
             InteractionLiason.this.bouncePacket(msg);
         }
     }

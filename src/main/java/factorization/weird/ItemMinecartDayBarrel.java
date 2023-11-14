@@ -62,10 +62,6 @@ public class ItemMinecartDayBarrel extends ItemFactorization implements IMinecar
             }
             return is;
         }
-
-        protected void playDispenseSound(IBlockSource at) {
-            at.getWorld().playAuxSFX(1000, at.getXInt(), at.getYInt(), at.getZInt(), 0);
-        }
     };
 
     public ItemMinecartDayBarrel() {
@@ -86,7 +82,7 @@ public class ItemMinecartDayBarrel extends ItemFactorization implements IMinecar
     }
 
     @Override
-    protected void addExtraInformation(ItemStack is, EntityPlayer player, List list, boolean verbose) {
+    protected void addExtraInformation(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {
         Core.registry.daybarrel.addExtraInformation(is, player, list, verbose);
     }
 
@@ -116,7 +112,7 @@ public class ItemMinecartDayBarrel extends ItemFactorization implements IMinecar
     ItemStack creative_cart = null;
 
     @Override
-    public void getSubItems(Item item, CreativeTabs tab, List list) {
+    public void getSubItems(Item item, CreativeTabs tab, List<ItemStack> list) {
         super.getSubItems(item, tab, list);
         if (creative_cart == null) {
             ItemStack creative = null;
@@ -143,11 +139,6 @@ public class ItemMinecartDayBarrel extends ItemFactorization implements IMinecar
 
     @Override
     public boolean hasContainerItem(ItemStack stack) {
-        return true;
-    }
-
-    @Override
-    public boolean doesContainerItemLeaveCraftingGrid(ItemStack stack) {
         return true;
     }
 

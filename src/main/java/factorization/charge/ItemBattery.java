@@ -48,7 +48,7 @@ public class ItemBattery extends ItemBlockProxy implements IActOnCraft {
     }
 
     @Override
-    public void addExtraInformation(ItemStack is, EntityPlayer player, List list, boolean verbose) {
+    public void addExtraInformation(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {
         final String pre = "item.factorization:charge_battery.";
         if (is.getTagCompound() != null && is.getTagCompound().hasKey("storage")) {
             float fullness = TileEntityBattery.getFullness(getStorage(is));

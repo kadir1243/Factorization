@@ -60,7 +60,7 @@ public class HammerWorldProvider extends WorldProvider {
     @Override
     public ChunkCoordinates getEntrancePortalLocation() {
         //err, this probably never gets called...
-        return new ChunkCoordinates(0, 128, 00);
+        return new ChunkCoordinates(0, 128, 0);
     }
     
     @Override

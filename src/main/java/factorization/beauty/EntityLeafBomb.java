@@ -2,7 +2,6 @@ package factorization.beauty;
 
 import factorization.algos.FastBag;
 import factorization.api.Coord;
-import factorization.api.ICoordFunction;
 import factorization.shared.Core;
 import factorization.util.DataUtil;
 import factorization.util.ItemUtil;
@@ -133,8 +132,8 @@ public class EntityLeafBomb extends EntityThrowable {
 
     private void spawnGentleLeafBlob(Coord at) {
         initNoise(at);
-        final HashSet<Coord> visited = new HashSet<Coord>(stack.stackSize);
-        final FastBag<Coord> frontier = new FastBag<Coord>();
+        final HashSet<Coord> visited = new HashSet<>(stack.stackSize);
+        final FastBag<Coord> frontier = new FastBag<>();
         frontier.add(at);
         visited.add(at);
         Coord min = at.copy(), max = at.copy();
@@ -159,26 +158,23 @@ public class EntityLeafBomb extends EntityThrowable {
             Coord.sort(min, at);
             Coord.sort(at, max);
         }
-        Coord.iterateCube(min, max, new ICoordFunction() {
-            @Override
-            public void handle(Coord here) {
-                if (!here.isReplacable()) return;
-                int accounted = 0;
-                for (Coord n : here.getNeighborsAdjacent()) {
-                    if (visited.contains(n)) {
-                        accounted++;
-                    } else if (n.isNormalCube()) {
-                        accounted++;
-                    } else if (n.getBlock().getMaterial() == Material.leaves) {
-                        accounted++;
-                    } else {
-                        return;
-                    }
+        Coord.iterateCube(min, max, here -> {
+            if (!here.isReplacable()) return;
+            int accounted = 0;
+            for (Coord n : here.getNeighborsAdjacent()) {
+                if (visited.contains(n)) {
+                    accounted++;
+                } else if (n.isNormalCube()) {
+                    accounted++;
+                } else if (n.getBlock().getMaterial() == Material.leaves) {
+                    accounted++;
+                } else {
+                    return;
                 }
-                if (accounted == 6) {
-                    stack.stackSize++;
-                    set(here);
-                }
+            }
+            if (accounted == 6) {
+                stack.stackSize++;
+                set(here);
             }
         });
     }

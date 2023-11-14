@@ -11,7 +11,7 @@ import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.item.ItemStack;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.List;
 import java.util.Map.Entry;
 
 public class ItemListViewer implements IDocGenerator {
@@ -60,9 +60,9 @@ public class ItemListViewer implements IDocGenerator {
         out.write("\n\n");
         int size = DocumentationModule.getNameItemCache().size();
         Multimap<String, ItemStack> found = HashMultimap.create(size, 1);
-        ArrayList<String> toSort = new ArrayList<String>();
-        for (Entry<String, ArrayList<ItemStack>> pair : DocumentationModule.getNameItemCache().entrySet()) {
-            ArrayList<ItemStack> items = pair.getValue();
+        ArrayList<String> toSort = new ArrayList<>();
+        for (Entry<String, List<ItemStack>> pair : DocumentationModule.getNameItemCache().entrySet()) {
+            List<ItemStack> items = pair.getValue();
             for (ItemStack is : items) {
                 if (ct != null && is.getItem().getCreativeTab() != ct) {
                     continue;
@@ -74,7 +74,7 @@ public class ItemListViewer implements IDocGenerator {
                 found.put(name, is);
             }
         }
-        Collections.sort(toSort, String.CASE_INSENSITIVE_ORDER);
+        toSort.sort(String.CASE_INSENSITIVE_ORDER);
         
         for (String name : toSort) {
             for (ItemStack is : found.get(name)) {

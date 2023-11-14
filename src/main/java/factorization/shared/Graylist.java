@@ -34,21 +34,11 @@ public class Graylist<E> {
     }
 
     public static Graylist<Block> ofBlocks(String source) {
-        return new Graylist<Block>(source, new Loader<Block>() {
-            @Override
-            public Block load(String name) {
-                return DataUtil.getBlockFromName(name);
-            }
-        }, (Comparator<Block>) identityComparator);
+        return new Graylist<>(source, DataUtil::getBlockFromName, (o1, o2) -> o1 == o2 ? 0 : 1);
     }
 
     public static Graylist<Item> ofItems(String source) {
-        return new Graylist<Item>(source, new Loader<Item>() {
-            @Override
-            public Item load(String name) {
-                return DataUtil.getItemFromName(name);
-            }
-        }, (Comparator<Item>) identityComparator);
+        return new Graylist<>(source, DataUtil::getItemFromName, (o1, o2) -> o1 == o2 ? 0 : 1);
     }
 
     public boolean passes(E element) {
@@ -60,14 +50,7 @@ public class Graylist<E> {
         return defaultMode;
     }
 
-    private static final Comparator identityComparator = new Comparator() {
-        @Override
-        public int compare(Object o1, Object o2) {
-            return o1 == o2 ? 0 : 1;
-        }
-    };
-
     private final boolean defaultMode;
     private final Comparator<E> comparator;
-    private final ArrayList<E> members = new ArrayList<E>();
+    private final ArrayList<E> members = new ArrayList<>();
 }

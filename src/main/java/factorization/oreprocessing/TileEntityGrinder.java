@@ -12,7 +12,7 @@ import net.minecraftforge.oredict.OreDictionary;
 public class TileEntityGrinder {
     // This is now just a recipe-holder class...
 
-    public static ArrayList<GrinderRecipe> recipes = new ArrayList();
+    public static ArrayList<GrinderRecipe> recipes = new ArrayList<>();
 
     public static void addRecipe(Object input, ItemStack output, float probability) {
         GrinderRecipe toAdd = new GrinderRecipe(input, output, probability);
@@ -28,7 +28,7 @@ public class TileEntityGrinder {
     public static class GrinderRecipe {
         private String oreName = null;
         private ItemStack itemstack = null;
-        private ArrayList<ItemStack> inputArray = new ArrayList();
+        private ArrayList<ItemStack> inputArray = new ArrayList<>();
         public ItemStack output;
         public float probability;
 

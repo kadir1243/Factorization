@@ -1,6 +1,6 @@
 package factorization.fzds;
 
-import factorization.coremod.LoadingPlugin;
+import cpw.mods.fml.common.Loader;
 import factorization.shared.Core;
 import net.minecraftforge.common.config.Configuration;
 
@@ -13,12 +13,10 @@ public class HammerEnabled {
         final String the_devil = "Bukkit, Craftbukkit, Cauldron, KCauldron, or MCPC+";
         boolean init = true;
         try {
-            Class cl = Class.forName("org.bukkit.Bukkit");
+            Class.forName("org.bukkit.Bukkit");
             // Also: net/minecraftforge/cauldron/api/Cauldron.class
             // However, this "kcauldron" seems to have that Bukkit class anyways.
-            if (cl != null) {
-                init = Boolean.parseBoolean(System.getProperty("fz.hammer.forceEnableWithBukkit", "false"));
-            }
+            init = Boolean.parseBoolean(System.getProperty("fz.hammer.forceEnableWithBukkit", "false"));
             if (!init) {
                 Core.logWarning(the_devil + " detected; disabling Hammer");
             }
@@ -26,7 +24,7 @@ public class HammerEnabled {
             // No bukkit
         }
 
-        final File configDirectory = new File(LoadingPlugin.getMcLocation(), "config");
+        final File configDirectory = Loader.instance().getConfigDir();
         if (!configDirectory.exists()) return init;
         File cfgName = new File(configDirectory, "hammerChannels.cfg");
         Configuration config = new Configuration(cfgName);

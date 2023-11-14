@@ -10,6 +10,7 @@ import factorization.shared.Core;
 import factorization.weird.TileEntityDayBarrel;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SharedMonsterAttributes;
+import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.ai.attributes.BaseAttributeMap;
 import net.minecraft.entity.ai.attributes.IAttributeInstance;
 import net.minecraft.entity.ai.attributes.ServersideAttributeMap;
@@ -17,17 +18,17 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
 
-import java.awt.*;
+import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
 
 public class FzUtil {
-
-
-    public static <E extends Enum> E shiftEnum(E current, E values[], int delta) {
+    public static <E extends Enum<E>> E shiftEnum(E current, E[] values, int delta) {
         int next = current.ordinal() + delta;
         if (next < 0) {
             return values[values.length - 1];
@@ -56,8 +57,8 @@ public class FzUtil {
         Toolkit.getDefaultToolkit().getSystemClipboard().setContents(stringselection, null);
     }
     
-    public static <E> ArrayList<E> copyWithoutNull(Collection<E> orig) {
-        ArrayList<E> ret = new ArrayList();
+    public static <E> List<E> copyWithoutNull(Collection<E> orig) {
+        List<E> ret = new ArrayList<>();
         if (orig == null) return ret;
         for (E e : orig) {
             if (e != null) ret.add(e);
@@ -70,15 +71,12 @@ public class FzUtil {
         try {
             is.close();
         } catch (IOException e) {
-            Core.logSevere(msg);
-            e.printStackTrace();
+            Core.logError(msg, e);
         }
     }
     
     public static boolean stringsEqual(String a, String b) {
-        if (a == b) return true;
-        if (a == null || b == null) return false;
-        return a.equals(b);
+        return Objects.equals(a, b);
     }
 
     public static void spawn(Entity ent) {
@@ -88,7 +86,7 @@ public class FzUtil {
 
     public static double rateDamage(ItemStack is) {
         if (is == null) return 0;
-        Multimap attrs = is.getItem().getAttributeModifiers(is);
+        Multimap<String, AttributeModifier> attrs = is.getItem().getAttributeModifiers(is);
         if (attrs == null) return 0;
         BaseAttributeMap test = new ServersideAttributeMap();
         test.applyAttributeModifiers(attrs);
@@ -121,24 +119,24 @@ public class FzUtil {
         }
     }
 
-    public static UnitBase unit_time[] = new UnitBase[] {
-            new UnitBase(1L * 20 * 60 * 60 * 24 * 365 * 1000 * 1000, "time.eons"),
-            new UnitBase(1L * 20 * 60 * 60 * 24 * 365 * 1000, "time.millenia"),
-            new UnitBase(1L * 20 * 60 * 60 * 24 * 365 * 100, "time.centuries"),
-            new UnitBase(1L * 20 * 60 * 60 * 24 * 365, "time.years"),
-            new UnitBase(1L * 20 * 60 * 60 * 24 * 30, "time.months"), // Mostly! :D
-            new UnitBase(1L * 20 * 60 * 60 * 24 * 7, "time.weeks"),
-            new UnitBase(1L * 20 * 60 * 60 * 24, "time.irldays"),
-            new UnitBase(1L * 20 * 60 * 60, "time.hours"),
-            //new UnitBase(1L * 20 * 60 * 20, "time.mcdays"), // skipped due to confusingness
-            new UnitBase(1L * 20 * 60, "time.minutes"),
-            new UnitBase(1L * 20, "time.seconds"),
+    private static final UnitBase[] unit_time = new UnitBase[] {
+            new UnitBase(20L * 60 * 60 * 24 * 365 * 1000 * 1000, "time.eons"),
+            new UnitBase(20L * 60 * 60 * 24 * 365 * 1000, "time.millenia"),
+            new UnitBase(20L * 60 * 60 * 24 * 365 * 100, "time.centuries"),
+            new UnitBase(20L * 60 * 60 * 24 * 365, "time.years"),
+            new UnitBase(20L * 60 * 60 * 24 * 30, "time.months"), // Mostly! :D
+            new UnitBase(20L * 60 * 60 * 24 * 7, "time.weeks"),
+            new UnitBase(20L * 60 * 60 * 24, "time.irldays"),
+            new UnitBase(20L * 60 * 60, "time.hours"),
+            //new UnitBase(20L * 60 * 20, "time.mcdays"), // skipped due to confusingness
+            new UnitBase(20L * 60, "time.minutes"),
+            new UnitBase(20L, "time.seconds"),
             new UnitBase(1L, "time.ticks"),
     };
-    public static UnitBase unit_distance_px[] = new UnitBase[] {
-            new UnitBase(1L * 16 * 1000, "distance.kilometers"),
-            new UnitBase(1L * 16 * 16, "distance.chunks"),
-            new UnitBase(1L * 16, "distance.blocks"),
+    private static final UnitBase[] unit_distance_px = new UnitBase[] {
+            new UnitBase(16L * 1000, "distance.kilometers"),
+            new UnitBase(16L * 16, "distance.chunks"),
+            new UnitBase(16L, "distance.blocks"),
             new UnitBase(1L, "distance.pixels"),
     };
 
@@ -155,7 +153,7 @@ public class FzUtil {
     }
 
     public static String unitify(String unitName, long value, int max_len) {
-        UnitBase[] base = null;
+        UnitBase[] base;
         if (unitName.equals("time")) {
             base = unit_time;
         } else if (unitName.equals("distance")) {
@@ -166,26 +164,26 @@ public class FzUtil {
         return unitify(base, value, max_len);
     }
 
-    public static String unitify(UnitBase[] bases, long value, int max_len) {
-        String r = "";
+    private static String unitify(UnitBase[] bases, long value, int max_len) {
+        StringBuilder r = new StringBuilder();
         while (max_len-- != 0) {
             UnitBase best = best(bases, value);
             long l = value / best.ratio;
             value -= best.ratio * l;
             if (l > 0) {
-                if (!r.isEmpty()) r += " ";
+                if (r.length() > 0) r.append(' ');
                 String unit = LangUtil.translateExact(best.unit + "." + l);
                 if (unit != null) {
-                    r += unit;
+                    r.append(unit);
                 } else {
-                    r += l + " " + LangUtil.translateThis(best.unit);
+                    r.append(l).append(' ').append(LangUtil.translateThis(best.unit));
                 }
-            } else if (value == 0 && !r.isEmpty()) {
-                return r;
+            } else if (value == 0 && r.length() > 0) {
+                return r.toString();
             }
             if (best.ratio == 1 || max_len == 0) break;
         }
-        return r;
+        return r.toString();
     }
 
     public static String unitTranslateTimeTicks(long value, int max_len) {

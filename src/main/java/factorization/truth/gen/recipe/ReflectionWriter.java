@@ -14,7 +14,7 @@ public class ReflectionWriter implements IObjectWriter<Object> {
     int recursion = 0;
 
     @Override
-    public void writeObject(List out, Object val, IObjectWriter<Object> generic) {
+    public void writeObject(List<Object> out, Object val, IObjectWriter<Object> generic) {
         try {
             addRecipeWithReflection(out, val, generic);
         } catch (Throwable t) {
@@ -53,8 +53,8 @@ public class ReflectionWriter implements IObjectWriter<Object> {
         if (val instanceof IRecipe) {
             recipeOutput = RecipeViewer.genericRecipePrefix(out, (IRecipe) val);
         }
-        ArrayList<String> properties = new ArrayList<String>();
-        HashSet<Object> seen = new HashSet<Object>();
+        ArrayList<String> properties = new ArrayList<>();
+        HashSet<Object> seen = new HashSet<>();
         final Class<?> valClass = val.getClass();
         if ((valClass.getModifiers() & Modifier.PUBLIC) == 0) return;
         for (Method method : valClass.getMethods()) {

@@ -46,7 +46,7 @@ public class ItemDayBarrel extends ItemBlockProxy {
     
     @Override
     @SideOnly(Side.CLIENT) // Invokes a client-only function getTooltip
-    protected void addExtraInformation(ItemStack is, EntityPlayer player, List list, boolean verbose) {
+    protected void addExtraInformation(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {
         Type upgrade = TileEntityDayBarrel.getUpgrade(is);
         if (upgrade == Type.SILKY) {
             list.add(LangUtil.translateThis("factorization.factoryBlock.DAYBARREL.SILKY.silkhint"));

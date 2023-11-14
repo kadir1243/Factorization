@@ -29,7 +29,7 @@ public class ItemServoRailWidget extends ItemFactorization {
     public String getUnlocalizedName(ItemStack is) {
         ServoComponent sc = get(is);
         if (sc == null) {
-            return super.getUnlocalizedName();
+            return super.getUnlocalizedName(is);
         }
         return super.getUnlocalizedName(is) + "." + sc.getName();
     }
@@ -37,12 +37,12 @@ public class ItemServoRailWidget extends ItemFactorization {
     @Override
     public String getItemStackDisplayName(ItemStack is) {
         String s = super.getItemStackDisplayName(is);
-        if (s == null || s.length() == 0) {
+        if (s == null || s.isEmpty()) {
             s = getUnlocalizedName(is);
         }
         return s;
-    };
-    
+    }
+
     ServoComponent get(ItemStack is) {
         if (!is.hasTagCompound()) {
             return null;
@@ -68,9 +68,8 @@ public class ItemServoRailWidget extends ItemFactorization {
         TileEntityServoRail rail = here.getTE(TileEntityServoRail.class);
         if (rail == null) {
             sc.onItemUse(here, player);
-        } else if (sc instanceof Decorator) {
-            Decorator dec = (Decorator) sc;
-            if (rail != null && rail.decoration == null) {
+        } else if (sc instanceof Decorator dec) {
+            if (rail.decoration == null) {
                 rail.setDecoration(dec);
                 if (world.isRemote){
                     here.redraw();
@@ -88,7 +87,7 @@ public class ItemServoRailWidget extends ItemFactorization {
     
     @Override
     @SideOnly(Side.CLIENT)
-    public void addExtraInformation(ItemStack is, EntityPlayer player, List list, boolean verbose) {
+    public void addExtraInformation(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {
         ServoComponent sc = get(is);
         if (sc != null) {
             sc.addInformation(list);
@@ -107,13 +106,13 @@ public class ItemServoRailWidget extends ItemFactorization {
         } else if (this == Core.registry.servo_widget_decor) {
             subItemsCache = ServoComponent.sorted_decors;
         } else {
-            subItemsCache = new ArrayList<ItemStack>();
+            subItemsCache = new ArrayList<>();
         }
     }
     
     @Override
     @SideOnly(Side.CLIENT)
-    public void getSubItems(Item id, CreativeTabs tab, List list) {
+    public void getSubItems(Item id, CreativeTabs tab, List<ItemStack> list) {
         loadSubItems();
         list.addAll(subItemsCache);
     }

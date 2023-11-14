@@ -8,8 +8,11 @@ import cpw.mods.fml.relauncher.SideOnly;
 import factorization.api.datahelpers.DataHelper;
 import factorization.api.datahelpers.IDataSerializable;
 import factorization.notify.ISaneCoord;
-import factorization.shared.*;
+import factorization.shared.BlockHelper;
+import factorization.shared.Core;
+import factorization.shared.FzNetDispatch;
 import factorization.shared.NetworkFactorization.MessageType;
+import factorization.shared.TileEntityCommon;
 import factorization.util.FzUtil;
 import factorization.util.ItemUtil;
 import factorization.util.PlayerUtil;
@@ -18,7 +21,6 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
@@ -54,7 +56,7 @@ public final class Coord implements IDataSerializable, ISaneCoord, Comparable<Co
     public World w;
     public int x, y, z;
     private static final Random rand = new Random();
-    private static final ThreadLocal<Coord> staticCoord = new ThreadLocal<Coord>();
+    private static final ThreadLocal<Coord> staticCoord = new ThreadLocal<>();
     
     public static final Coord ZERO = new Coord(null, 0, 0, 0);
 
@@ -105,27 +107,24 @@ public final class Coord implements IDataSerializable, ISaneCoord, Comparable<Co
         if (o instanceof Coord) {
             return (Coord) o;
         }
-        if (o instanceof Vec3) {
-            Vec3 vec = (Vec3) o;
+        if (o instanceof Vec3 vec) {
             return new Coord(world, vec.xCoord, vec.yCoord, vec.zCoord);
         }
-        if (o instanceof Entity) {
-            Entity e = (Entity) o;
+        if (o instanceof Entity e) {
             return new Coord(e);
         }
-        if (o instanceof TileEntity) {
-            TileEntity te = (TileEntity) o;
+        if (o instanceof TileEntity te) {
             return new Coord(te);
         }
         return null;
     }
     
     public static Coord of(int x, int y, int z) {
-        return of((World) null, x, y, z);
+        return of(null, x, y, z);
     }
     
     public static Coord of(double x, double y, double z) {
-        return of((World) null, (int) x, (int) y, (int) z);
+        return of(null, (int) x, (int) y, (int) z);
     }
     
     public static Coord of(World w, int x, int y, int z) {
@@ -208,8 +207,7 @@ public final class Coord implements IDataSerializable, ISaneCoord, Comparable<Co
 
     @Override
     public boolean equals(Object obj) {
-        if (obj instanceof Coord) {
-            Coord other = (Coord) obj;
+        if (obj instanceof Coord other) {
             return x == other.x && y == other.y && z == other.z && w == other.w;
         }
         return false;
@@ -220,12 +218,12 @@ public final class Coord implements IDataSerializable, ISaneCoord, Comparable<Co
     }
     
     public int get(int axis) {
-        switch (axis) {
-        case 0: return x;
-        case 1: return y;
-        case 2: return z;
-        default: throw new RuntimeException("Invalid argument");
-        }
+        return switch (axis) {
+            case 0 -> x;
+            case 1 -> y;
+            case 2 -> z;
+            default -> throw new RuntimeException("Invalid argument");
+        };
     }
     
     public void set(int axis, int value) {
@@ -291,7 +289,7 @@ public final class Coord implements IDataSerializable, ISaneCoord, Comparable<Co
     }
 
     public ArrayList<Coord> getNeighborsAdjacent() {
-        ArrayList<Coord> ret = new ArrayList<Coord>(6);
+        ArrayList<Coord> ret = new ArrayList<>(6);
         for (DeltaCoord d : DeltaCoord.directNeighbors) {
             ret.add(this.add(d));
         }
@@ -299,7 +297,7 @@ public final class Coord implements IDataSerializable, ISaneCoord, Comparable<Co
     }
     
     public <T> List<T> getAdjacentTEs(Class<T> clazz) {
-        ArrayList<T> ret = new ArrayList<T>(6);
+        ArrayList<T> ret = new ArrayList<>(6);
         for (Coord n : getNeighborsAdjacent()) {
             T toAdd = n.getTE(clazz);
             if (toAdd != null) {
@@ -310,7 +308,7 @@ public final class Coord implements IDataSerializable, ISaneCoord, Comparable<Co
     }
 
     public ArrayList<Coord> getNeighborsDiagonal() {
-        ArrayList<Coord> ret = new ArrayList<Coord>(26);
+        ArrayList<Coord> ret = new ArrayList<>(26);
         for (int dx = -1; dx <= 1; dx++) {
             for (int dy = -1; dy <= 1; dy++) {
                 for (int dz = -1; dz <= 1; dz++) {
@@ -624,13 +622,10 @@ public final class Coord implements IDataSerializable, ISaneCoord, Comparable<Co
         final PlayerManager pm = world.getPlayerManager();
         PlayerManager.PlayerInstance watcher = pm.getOrCreateChunkWatcher(chunk.xPosition, chunk.zPosition, false);
         if (watcher == null) return;
-        ArrayList<EntityPlayerMP> players = new ArrayList<EntityPlayerMP>();
-        players.addAll(watcher.playersWatchingChunk);
-        for (EntityPlayerMP player : players) {
+        for (EntityPlayerMP player : (List<EntityPlayerMP>) watcher.playersWatchingChunk) {
             watcher.removePlayer(player);
             watcher.addPlayer(player);
         }
-
 
         Packet packet = new S21PacketChunkData(chunk, true, -1);
         FzNetDispatch.addPacketFrom(packet, chunk);
@@ -1098,8 +1093,7 @@ public final class Coord implements IDataSerializable, ISaneCoord, Comparable<Co
             return null;
         }
         ItemStack main = dropped.remove(0);
-        for (int i = 0; i < dropped.size(); i++) {
-            ItemStack other = dropped.get(i);
+        for (ItemStack other : dropped) {
             if (!ItemUtil.couldMerge(main, other)) {
                 return null;
             }

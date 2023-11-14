@@ -1,18 +1,17 @@
-package factorization.coremodhooks;
+package factorization.mixin;
 
+import factorization.coremodhooks.IKinematicTracker;
 import net.minecraft.entity.Entity;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.world.World;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 
-public abstract class MixinEntityKinematicsTracker extends Entity implements IKinematicTracker {
-
-    public MixinEntityKinematicsTracker(World w) {
-        super(w);
-    }
-
+@Mixin(Entity.class)
+public class EntityMixin implements IKinematicTracker {
+    @Unique
     private long kinematics_last_change; // Should be initialized to somehting negative, but our mixins don't support that
-    double kinematics_motX, kinematics_motY, kinematics_motZ;
-    
+    @Unique
+    private double kinematics_motX, kinematics_motY, kinematics_motZ;
+
     @Override
     public double getKinematics_motX() {
         return kinematics_motX;
@@ -33,16 +32,18 @@ public abstract class MixinEntityKinematicsTracker extends Entity implements IKi
         return kinematics_yaw;
     }
 
-    double kinematics_yaw;
-    
+    @Unique
+    private double kinematics_yaw;
+
     @Override
     public void reset(long now) {
         if (now == kinematics_last_change) return;
         kinematics_last_change = now;
-        kinematics_motX = this.motionX;
-        kinematics_motY = this.motionY;
-        kinematics_motZ = this.motionZ;
-        kinematics_yaw = this.rotationYaw;
+        kinematics_motX = ((Entity) (Object)this).motionX;
+        kinematics_motY = ((Entity) (Object)this).motionY;
+        kinematics_motZ = ((Entity) (Object)this).motionZ;
+        kinematics_yaw = ((Entity) (Object)this).rotationYaw;
     }
-    
+
+
 }

@@ -17,10 +17,9 @@ public abstract class WrappedPacket extends Packet implements IFzdsShenanigans {
      * These fields hold the packet maps.
      * See {@link net.minecraft.util.MessageDeserializer#decode}
      */
-    static final BiMap<Integer, Class> serverPacketMap = EnumConnectionState.PLAY.func_150755_b();
-    static final BiMap<Integer, Class> clientPacketMap = EnumConnectionState.PLAY.func_150753_a();
-    
-    
+    static final BiMap<Integer, Class<? extends Packet>> serverPacketMap = EnumConnectionState.PLAY.func_150755_b();
+    static final BiMap<Integer, Class<? extends Packet>> clientPacketMap = EnumConnectionState.PLAY.func_150753_a();
+
     static int server_packet_id = 92;
     static int client_packet_id = 92;
     public static void registerPacket() {
@@ -28,13 +27,13 @@ public abstract class WrappedPacket extends Packet implements IFzdsShenanigans {
             throw new RuntimeException("Packet " + server_packet_id + " is already registered!");
         }
         serverPacketMap.put(server_packet_id, WrappedPacketFromServer.class); //server -> client packets
-        EnumConnectionState.PLAY.field_150761_f.put(WrappedPacketFromServer.class, EnumConnectionState.PLAY);
+        EnumConnectionState.field_150761_f.put(WrappedPacketFromServer.class, EnumConnectionState.PLAY);
 
         if (clientPacketMap.containsKey(client_packet_id)) {
             throw new RuntimeException("Packet " + client_packet_id + " is already registered!");
         }
         clientPacketMap.put(client_packet_id, WrappedPacketFromClient.class);
-        EnumConnectionState.PLAY.field_150761_f.put(WrappedPacketFromClient.class, EnumConnectionState.PLAY);
+        EnumConnectionState.field_150761_f.put(WrappedPacketFromClient.class, EnumConnectionState.PLAY);
     }
     
     Packet wrapped = null;
@@ -80,7 +79,7 @@ public abstract class WrappedPacket extends Packet implements IFzdsShenanigans {
     }
 
     protected abstract boolean isServerside();
-    protected abstract BiMap<Integer, Class> getPacketMap();
+    protected abstract BiMap<Integer, Class<? extends Packet>> getPacketMap();
 
     @Override
     public void writePacketData(PacketBuffer data) {

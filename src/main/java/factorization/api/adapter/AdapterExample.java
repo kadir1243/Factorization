@@ -10,7 +10,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.world.World;
 
-@SuppressWarnings("unused")
 class AdapterExample {
     interface ISparkly {
         InterfaceAdapter<Block, ISparkly> adapter = InterfaceAdapter.get(ISparkly.class);
@@ -18,7 +17,7 @@ class AdapterExample {
         int getSparklePower(World w, int x, int y, int z);
     }
 
-    class BlockVampire extends Block implements ISparkly {
+    static class BlockVampire extends Block implements ISparkly {
         public BlockVampire(Material shiny) {
             super(shiny);
         }
@@ -30,29 +29,22 @@ class AdapterExample {
     }
 
     void init() {
-        ISparkly.adapter.register(Block.class, new ISparkly() {
-            @Override
-            public int getSparklePower(World w, int x, int y, int z) {
-                Block b = w.getBlock(x, y, z);
-                if (b == Blocks.diamond_block) return 100;
-                if (b == Blocks.coal_block) return -10;
-                return 0;
-            }
+        ISparkly.adapter.register(Block.class, (w, x, y, z) -> {
+            Block b = w.getBlock(x, y, z);
+            if (b == Blocks.diamond_block) return 100;
+            if (b == Blocks.coal_block) return -10;
+            return 0;
         });
-        final ISparkly sparkly_inventory = new ISparkly() {
-            @Override
-            public int getSparklePower(World w, int x, int y, int z) {
-                TileEntity te = w.getTileEntity(x, y, z);
-                if (te instanceof IInventory) {
-                    IInventory inv = (IInventory) te;
-                    ItemStack first = inv.getStackInSlot(0);
-                    if (first == null) return 0;
-                    return first.getItem() == Items.nether_star ? 10000 : 0;
-                }
-                return 0;
+        final ISparkly sparkly_inventory = (w, x, y, z) -> {
+            TileEntity te = w.getTileEntity(x, y, z);
+            if (te instanceof IInventory inv) {
+                ItemStack first = inv.getStackInSlot(0);
+                if (first == null) return 0;
+                return first.getItem() == Items.nether_star ? 10000 : 0;
             }
+            return 0;
         };
-        ISparkly.adapter.register(new Adapter<Block, ISparkly>() {
+        ISparkly.adapter.register(new Adapter<>() {
             @Override
             public ISparkly adapt(final Block val) {
                 return sparkly_inventory;

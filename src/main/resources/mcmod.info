@@ -1,18 +1,19 @@
 [
  {
   "authorList": [
-   "neptunepink"
+   "neptunepink",
+   "kadir1243"
   ], 
   "credits": "", 
   "dependencies": [], 
   "description": "Auto-crafting, ore processing, barrels, and other tools", 
-  "mcversion": "${mcversion}", 
-  "modid": "factorization", 
-  "name": "Factorization", 
+  "mcversion": "${minecraftVersion}",
+  "modid": "${modId}",
+  "name": "${modName}",
   "parent": "", 
   "screenshots": [], 
   "updateUrl": "", 
   "url": "http://minecraftforum.net/topic/1351802-", 
-  "version": "${version}"
+  "version": "${modVersion}"
  }
 ]

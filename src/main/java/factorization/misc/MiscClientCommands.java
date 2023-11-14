@@ -44,6 +44,10 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.lang.reflect.Method;
 import java.nio.IntBuffer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.text.DateFormat;
 import java.util.*;
 
@@ -71,7 +75,7 @@ public class MiscClientCommands implements ICommand {
     }
 
     @Override
-    public List getCommandAliases() {
+    public List<String> getCommandAliases() {
         return null;
     }
 
@@ -91,22 +95,22 @@ public class MiscClientCommands implements ICommand {
     
     @Retention(value = RUNTIME)
     @Target(value = METHOD)
-    static @interface alias {
-        public String[] value();
+    @interface alias {
+        String[] value();
     }
     
     @Retention(value = RUNTIME)
     @Target(value = METHOD)
-    static @interface sketchy { }
+    @interface sketchy { }
     
     @Retention(value = RUNTIME)
     @Target(value = METHOD)
-    static @interface cheaty { }
+    @interface cheaty { }
     
     @Retention(value = RUNTIME)
     @Target(value = METHOD)
-    static @interface help {
-        public String value();
+    @interface help {
+        String value();
     }
     
     public static class miscCommands {
@@ -134,45 +138,44 @@ public class MiscClientCommands implements ICommand {
         
         @help("Lists available subcommands. Can also search the list.")
         public static void list() {
-            String em = "" + EnumChatFormatting.GREEN;
             for (Method method : miscCommands.class.getMethods()) {
                 if (!commandAllowed(method)) {
                     continue;
                 }
                 
-                String msg = em + method.getName() + EnumChatFormatting.RESET;
+                StringBuilder msg = new StringBuilder(EnumChatFormatting.GREEN + method.getName() + EnumChatFormatting.RESET);
                 alias a = method.getAnnotation(alias.class);
                 if (a != null) {
                     for (String v : a.value()) {
-                        msg += ", " + em + v + EnumChatFormatting.RESET;
+                        msg.append(", ").append(EnumChatFormatting.GREEN).append(v).append(EnumChatFormatting.RESET);
                     }
                 }
                 help h = method.getAnnotation(help.class);
                 if (h != null) {
-                    msg += ": " + h.value();
+                    msg.append(": ").append(h.value());
                 }
                 if (method.getAnnotation(sketchy.class) != null) {
-                    msg += EnumChatFormatting.DARK_GRAY + " [SKETCHY]";
+                    msg.append(EnumChatFormatting.DARK_GRAY + " [SKETCHY]");
                 }
                 if (method.getAnnotation(cheaty.class) != null) {
-                    msg += EnumChatFormatting.RED + " [CHEATY]";
+                    msg.append(EnumChatFormatting.RED + " [CHEATY]");
                 }
-                if (arg1 == null || arg1.length() == 0 || msg.contains(arg1)) {
-                    player.addChatMessage(new ChatComponentText(msg));
+                if (arg1 == null || arg1.isEmpty() || msg.toString().contains(arg1)) {
+                    player.addChatMessage(new ChatComponentText(msg.toString()));
                 }
             }
-            String msg = "";
+            StringBuilder msg = new StringBuilder();
             boolean first = true;
             for (String v : new String[] {"0", "1", "2", "3", "4", "+", "-"}) {
                 if (!first) {
-                    msg += ", ";
+                    msg.append(", ");
                 }
                 first = false;
-                msg += em + v + EnumChatFormatting.RESET;
+                msg.append(EnumChatFormatting.GREEN).append(v).append(EnumChatFormatting.RESET);
             }
-            msg += ": " + "Changes the fog";
-            if (arg1 == null || arg1.length() == 0 || msg.contains(arg1)) {
-                player.addChatMessage(new ChatComponentText(msg));
+            msg.append(": " + "Changes the fog");
+            if (arg1 == null || arg1.isEmpty() || msg.toString().contains(arg1)) {
+                player.addChatMessage(new ChatComponentText(msg.toString()));
             }
         }
         
@@ -446,7 +449,7 @@ public class MiscClientCommands implements ICommand {
             }
         }
         
-        static Map backup = null, empty = new HashMap();
+        static Map<Class<? extends net.minecraft.tileentity.TileEntity>, net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer> backup = null, empty = new HashMap<>();
         
         @help("Disable or enable TileEntity special renderers")
         public static String tesrtoggle() {
@@ -485,7 +488,7 @@ public class MiscClientCommands implements ICommand {
                 return;
             }
             for (World w : ms.worldServers) {
-                for (Entity ent : (Iterable<Entity>) w.loadedEntityList) {
+                for (Entity ent : w.loadedEntityList) {
                     if (ent instanceof EntityLiving) {
                         ent.setDead();
                     } else if (ent instanceof EntityItem) {
@@ -599,7 +602,7 @@ public class MiscClientCommands implements ICommand {
         public static String mc2713() {
             int failed = 0;
             World world = mc.theWorld;
-            nextEntity: for (Entity ent : (Iterable<Entity>) world.loadedEntityList) {
+            nextEntity: for (Entity ent : world.loadedEntityList) {
                 Chunk chunk = world.getChunkFromChunkCoords(ent.chunkCoordX, ent.chunkCoordZ);
                 for (Entity e : (Iterable<Entity>) chunk.entityLists[ent.chunkCoordY]) {
                     if (e == ent) continue nextEntity;
@@ -698,9 +701,9 @@ public class MiscClientCommands implements ICommand {
         if (args == null || args.length == 0) {
             args = new String[] { "help" };
         }
-        ArrayList<String> better = new ArrayList();
+        List<String> better = new ArrayList<>();
         for (String arg : args) {
-            if (arg == null || arg.length() == 0) continue;
+            if (arg == null || arg.isEmpty()) continue;
             better.add(arg);
         }
         runCommand(better);
@@ -712,11 +715,11 @@ public class MiscClientCommands implements ICommand {
     }
     
     @Override
-    public List addTabCompletionOptions(ICommandSender sender, String[] args) {
+    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
         try {
             if (args.length == 1) {
                 String arg0 = args[0];
-                List<String> availCommands = new ArrayList<String>(50);
+                List<String> availCommands = new ArrayList<>(50);
                 availCommands.addAll(Arrays.asList("0", "1", "2", "3", "4", "+", ""));
                 for (Method method : miscCommands.class.getMethods()) {
                     if (method.getDeclaringClass() == Object.class || method.getParameterTypes().length != 0) {
@@ -727,12 +730,10 @@ public class MiscClientCommands implements ICommand {
                     if (a == null) {
                         continue;
                     }
-                    for (String name : a.value()) {
-                        availCommands.add(name);
-                    }
+                    availCommands.addAll(Arrays.asList(a.value()));
                 }
                 
-                List<String> ret = new LinkedList();
+                List<String> ret = new LinkedList<>();
                 for (String name : availCommands) {
                     if (name.startsWith(arg0)) {
                         ret.add(name);
@@ -745,16 +746,16 @@ public class MiscClientCommands implements ICommand {
             e.printStackTrace();
             return Arrays.asList("tab_completion_failed");
         }
-        return new LinkedList();
+        return new LinkedList<>();
     }
     
     void runCommand(List<String> args) {
         try {
             if (args == null) {
-                args = new ArrayList<String>();
+                args = new ArrayList<>();
             }
             String n;
-            if (args.size() == 0) {
+            if (args.isEmpty()) {
                 args = Arrays.asList("help");
                 n = "help";
             } else {
@@ -814,20 +815,16 @@ public class MiscClientCommands implements ICommand {
     }
     
     private void addBugReport(List<String> args) {
-        String msg = "[" + Calendar.getInstance().getTime().toString() + "]";
+        String msg = "[" + Calendar.getInstance().getTime() + "]";
         for (String arg : args) {
-            if (arg == args.get(0)) continue;
+            if (Objects.equals(arg, args.get(0))) continue;
             msg += " " + arg;
         }
         if (msg.isEmpty()) return;
         try {
-            File target = new File("/media/media/fbugs");
-            Writer out = new BufferedWriter(new FileWriter(target, true));
-            out.append(msg + "\n");
-            out.flush();
-            out.close();
-        } catch (Throwable t) {
-            t.printStackTrace();
+            Files.write(Paths.get("/media/media/fbugs"), (msg + '\n').getBytes(StandardCharsets.UTF_8), StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            Core.logError("Can not write message", e);
         }
     }
     
@@ -884,8 +881,7 @@ public class MiscClientCommands implements ICommand {
         }
         switch (queued_action) {
         case CLEAR_CHAT:
-            List cp = new ArrayList();
-            cp.addAll(mc.ingameGUI.getChatGUI().getSentMessages());
+            List<String> cp = new ArrayList<>(mc.ingameGUI.getChatGUI().getSentMessages());
             mc.ingameGUI.getChatGUI().clearChatMessages(); 
             mc.ingameGUI.getChatGUI().getSentMessages().addAll(cp);
             new Notice(mc.thePlayer, "").withStyle(Style.CLEAR).send(mc.thePlayer);

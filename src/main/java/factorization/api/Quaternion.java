@@ -86,22 +86,22 @@ public class Quaternion implements IDataSerializable {
     
     public void write(ByteArrayDataOutput out) {
         double[] d = toStaticArray();
-        for (int i = 0; i < d.length; i++) {
-            out.writeDouble(d[i]);
+        for (double v : d) {
+            out.writeDouble(v);
         }
     }
     
     public void write(ByteBuf out) {
         double[] d = toStaticArray();
-        for (int i = 0; i < d.length; i++) {
-            out.writeDouble(d[i]);
+        for (double v : d) {
+            out.writeDouble(v);
         }
     }
     
     public void write(DataOutputStream out) throws IOException {
         double[] d = toStaticArray();
-        for (int i = 0; i < d.length; i++) {
-            out.writeDouble(d[i]);
+        for (double v : d) {
+            out.writeDouble(v);
         }
     }
     
@@ -142,12 +142,7 @@ public class Quaternion implements IDataSerializable {
         return fillArray(new double[4]);
     }
     
-    private static ThreadLocal<double[]> localStaticArray = new ThreadLocal<double[]>() {
-        @Override
-        protected double[] initialValue() {
-            return new double[4];
-        };
-    };
+    private static ThreadLocal<double[]> localStaticArray = ThreadLocal.withInitial(() -> new double[4]);
     
     public double[] toStaticArray() {
         return fillArray(localStaticArray.get());
@@ -239,9 +234,8 @@ public class Quaternion implements IDataSerializable {
     }
     
     private static Quaternion[] quat_cache = new Quaternion[25 /*FzOrientation.values().length recursive reference, bleh*/];
-    /***
-     * @param An {@link FzOrientation}
-     * @return A {@link Quaternion} that should not be mutated. It 
+    /**
+     * @return A {@link Quaternion} that should not be mutated. It
      */
     public static Quaternion fromOrientation(final FzOrientation orient) {
         final int ord = orient.ordinal();
@@ -294,7 +288,7 @@ public class Quaternion implements IDataSerializable {
     }
     
     /**
-     * @param Vec3 that gets mutated to the axis of rotation
+     * @param axis that gets mutated to the axis of rotation
      * @return the rotation
      */
     public double setVector(Vec3 axis) {
@@ -453,7 +447,7 @@ public class Quaternion implements IDataSerializable {
     }
     
     /** 
-     * Acts like {@link incrMultiply}, but the argument gets incremented instead of this.
+     * Acts like {@link #incrMultiply}, but the argument gets incremented instead of this.
      */
     public void incrToOtherMultiply(Quaternion other) {
         double nw, nx, ny, nz;

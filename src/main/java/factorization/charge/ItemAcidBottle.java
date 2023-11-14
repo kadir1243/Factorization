@@ -1,25 +1,23 @@
 package factorization.charge;
 
-import java.util.List;
-
 import factorization.shared.Core;
+import factorization.shared.Core.TabType;
 import factorization.shared.ItemFactorization;
 import factorization.shared.Sound;
-import factorization.shared.Core.TabType;
-
 import factorization.util.InvUtil;
 import factorization.util.ItemUtil;
-import factorization.util.PlayerUtil;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Items;
 import net.minecraft.item.EnumAction;
 import net.minecraft.item.Item;
-import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.DamageSource;
 import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
+
+import java.util.List;
 
 public class ItemAcidBottle extends ItemFactorization {
 
@@ -106,7 +104,7 @@ public class ItemAcidBottle extends ItemFactorization {
     }
     
     @Override
-    public void getSubItems(Item id, CreativeTabs tab, List list) {
+    public void getSubItems(Item id, CreativeTabs tab, List<ItemStack> list) {
         super.getSubItems(id, tab, list);
         list.add(Core.registry.aqua_regia);
     }

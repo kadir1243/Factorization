@@ -62,17 +62,7 @@ public class MiscellaneousNonsense {
     public void modsLoaded(FMLPostInitializationEvent event) {
         // Fixes lack of creeper dungeons
         DungeonHooks.addDungeonMob("Creeper", 1);
-        // Etho, of all people, found one. It'd be nice if they were just a bit rarer.
-        // Scaling everything else up seems like a poor solution tho.
-        @SuppressWarnings("unused")
-        String THATS_SOME_VERY_NICE_SOURCE_CODE_YOU_HAVE_THERE[] = {
-                "##  ##",
-                "##  ##",
-                "  ##  ",
-                " #### ",
-                " #  # "
-        };
-        
+
         proxy.initializeClient();
         proxy.registerLoadAlert();
         Core.loadBus(this);
@@ -165,7 +155,7 @@ public class MiscellaneousNonsense {
             if (player.ticksExisted < 20*10) return true;
             if (player.getFoodStats().getFoodLevel() <= 2) return true;
             if (player.worldObj.getWorldInfo().getVanillaDimension() != 0) return true; // Grrrr....
-            for (PotionEffect pot : (Iterable<PotionEffect>) player.getActivePotionEffects()) {
+            for (PotionEffect pot : player.getActivePotionEffects()) {
                 int id = pot.getPotionID();
                 // Any particularly harmful potions
                 if (id == Potion.wither.id || id == Potion.poison.id || id == Potion.weakness.id || id == Potion.hunger.id) {

@@ -19,7 +19,6 @@ import factorization.fzds.network.WrappedPacket;
 import factorization.shared.Core;
 import factorization.util.FzUtil;
 import net.minecraft.entity.Entity;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerManager;
 import net.minecraft.world.World;
 import net.minecraftforge.common.DimensionManager;
@@ -62,7 +61,6 @@ public class Hammer {
     static DeltaChunkMap serverSlices = new DeltaChunkMap(), clientSlices = new DeltaChunkMap();
 
     public Hammer() {
-        Core.checkJar();
         Hammer.instance = this;
         if (!DeltaChunk.enabled()) return;
         Hammer.net = new HammerNet();
@@ -131,7 +129,7 @@ public class Hammer {
             throw new RuntimeException("Expected HammerWorldProvider for HammerWorld; is there a dimension ID conflict? Actual provider: " + hammerWorld.provider.getClass());
         }
         hammerWorld.addWorldAccess(new ServerShadowWorldAccess());
-        int view_distance = MinecraftServer.getServer().getConfigurationManager().getViewDistance();
+        int view_distance = event.getServer().getConfigurationManager().getViewDistance();
         //the undeobfed method comes after "isPlayerWatchingChunk", also in uses of ServerConfigurationManager.getViewDistance()
         //It returns how many blocks are visible.
         DSE_ChunkUpdateRangeSquared = Math.pow(PlayerManager.getFurthestViewableBlock(view_distance) + 16*2, 2);

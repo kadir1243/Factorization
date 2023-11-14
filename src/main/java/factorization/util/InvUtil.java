@@ -2,18 +2,13 @@ package factorization.util;
 
 import factorization.api.Coord;
 import factorization.shared.TileEntityCommon;
-import factorization.util.ItemUtil;
-import factorization.util.NumUtil;
 import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Blocks;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.InventoryLargeChest;
-import net.minecraft.inventory.Slot;
+import net.minecraft.inventory.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntityChest;
 import net.minecraft.world.World;
@@ -131,8 +126,7 @@ public final class InvUtil {
                 return null;
             }
         }
-        if (orig_inv instanceof net.minecraft.inventory.ISidedInventory) {
-            final net.minecraft.inventory.ISidedInventory inv = (net.minecraft.inventory.ISidedInventory) orig_inv;
+        if (orig_inv instanceof ISidedInventory inv) {
             int[] slotMapTmp = inv.getAccessibleSlotsFromSide(side);
             if (slotMapTmp == null) {
                 slotMapTmp = new int[0];
@@ -184,13 +178,12 @@ public final class InvUtil {
     }
 
     public static boolean canAccessSlot(IInventory inv, int slot) {
-        if (inv instanceof net.minecraft.inventory.ISidedInventory) {
-            net.minecraft.inventory.ISidedInventory isi = (net.minecraft.inventory.ISidedInventory) inv;
+        if (inv instanceof ISidedInventory isi) {
             //O(n). Ugh.
             for (int i = 0; i < 6; i++) {
                 int[] slots = isi.getAccessibleSlotsFromSide(i);
-                for (int j = 0; j < slots.length; j++) {
-                    if (slots[j] == slot) {
+                for (int k : slots) {
+                    if (k == slot) {
                         return true;
                     }
                 }
@@ -204,12 +197,8 @@ public final class InvUtil {
     /**
      * If you are accessing multiple chests, and some might be adjacent you'll want to treat them as a double chest. Calling this function with a lower chest
      * will return 'null'; calling with an upper chest will return an InventoryLargeChest. If it's a single chest, it'll return that chest.
-     *
-     * @param chest
-     * @return
      */
     public static IInventory openDoubleChest(TileEntityChest chest, boolean openBothSides) {
-        IInventory origChest = chest;
         World world = chest.getWorldObj();
         int i = chest.xCoord, j = chest.yCoord, k = chest.zCoord;
         Block cb = chest.getBlockType();
@@ -218,21 +207,21 @@ public final class InvUtil {
         }
         Block chestBlock = Blocks.chest;
         if (world.getBlock(i - 1, j, k) == chestBlock) {
-            return new InventoryLargeChest(origChest.getInventoryName(), (TileEntityChest) world.getTileEntity(i - 1, j, k), origChest);
+            return new InventoryLargeChest(chest.getInventoryName(), (TileEntityChest) world.getTileEntity(i - 1, j, k), chest);
         }
         if (world.getBlock(i, j, k - 1) == chestBlock) {
-            return new InventoryLargeChest(origChest.getInventoryName(), (TileEntityChest) world.getTileEntity(i, j, k - 1), origChest);
+            return new InventoryLargeChest(chest.getInventoryName(), (TileEntityChest) world.getTileEntity(i, j, k - 1), chest);
         }
         // If we're the lower chest, skip ourselves
         if (world.getBlock(i + 1, j, k) == chestBlock) {
             if (openBothSides) {
-                return new InventoryLargeChest(origChest.getInventoryName(), origChest, (TileEntityChest) world.getTileEntity(i + 1, j, k));
+                return new InventoryLargeChest(chest.getInventoryName(), chest, (TileEntityChest) world.getTileEntity(i + 1, j, k));
             }
             return null;
         }
         if (world.getBlock(i, j, k + 1) == chestBlock) {
             if (openBothSides) {
-                return new InventoryLargeChest(origChest.getInventoryName(), origChest, (TileEntityChest) world.getTileEntity(i, j, k + 1));
+                return new InventoryLargeChest(chest.getInventoryName(), chest, (TileEntityChest) world.getTileEntity(i, j, k + 1));
             }
             return null;
         }

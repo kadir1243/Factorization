@@ -29,9 +29,9 @@ public class ContainerPocket extends Container {
     IInventory craftResult = new InventoryCraftResult();
     final World world;
 
-    ArrayList<Slot> nonCraftingInventorySlots = new ArrayList();
-    ArrayList<Slot> craftingSlots = new ArrayList();
-    ArrayList<Slot> mainInvThenHotbarSlots = new ArrayList();
+    ArrayList<Slot> nonCraftingInventorySlots = new ArrayList<>();
+    ArrayList<Slot> craftingSlots = new ArrayList<>();
+    ArrayList<Slot> mainInvThenHotbarSlots = new ArrayList<>();
     Slot craftResultSlot;
 
     ItemStack fake_is;
@@ -54,8 +54,8 @@ public class ContainerPocket extends Container {
     void addPlayerSlots(IInventory inventoryplayer) {
         int invdx = 0, invdy = 0;
         int y = 3;
-        ArrayList<Slot> hotbarSlots = new ArrayList();
-        ArrayList<Slot> mainInvSlots = new ArrayList();
+        ArrayList<Slot> hotbarSlots = new ArrayList<>();
+        ArrayList<Slot> mainInvSlots = new ArrayList<>();
         for (int x = 0; x < 9; x++) {
             Slot slot = new Slot(inventoryplayer, x, invdx + 8 + x * 18, 4 + invdy + 8 + y * 18);
             addSlotToContainer(slot);

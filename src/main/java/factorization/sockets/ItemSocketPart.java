@@ -1,8 +1,10 @@
 package factorization.sockets;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import factorization.common.FactoryType;
+import factorization.shared.Core.TabType;
+import factorization.shared.ItemFactorization;
 import factorization.util.LangUtil;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
@@ -11,11 +13,9 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import factorization.common.FactoryType;
-import factorization.shared.Core.TabType;
-import factorization.shared.ItemFactorization;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Deprecated
 public class ItemSocketPart extends ItemFactorization {
@@ -27,13 +27,13 @@ public class ItemSocketPart extends ItemFactorization {
     }
     
     
-    ArrayList<FactoryType> loadSockets() {
-        ArrayList<FactoryType> ret = new ArrayList();
+    List<FactoryType> loadSockets() {
+        List<FactoryType> ret = new ArrayList<>();
         for (FactoryType ft : FactoryType.values()) {
             if (ft == FactoryType.SOCKET_EMPTY) {
                 continue;
             }
-            Class theClass = ft.getFactoryTypeClass();
+            Class<?> theClass = ft.getFactoryTypeClass();
             while (theClass != null) {
                 theClass = theClass.getSuperclass();
                 if (theClass == TileEntitySocketBase.class) {
@@ -55,7 +55,7 @@ public class ItemSocketPart extends ItemFactorization {
     FactoryType[] socketTypes = null;
     FactoryType[] getSockets() {
         if (socketTypes == null) {
-            ArrayList<FactoryType> aft = loadSockets();
+            List<FactoryType> aft = loadSockets();
             socketTypes = new FactoryType[aft.size()];
             for (int i = 0; i < socketTypes.length; i++) {
                 socketTypes[i] = aft.get(i);
@@ -81,16 +81,14 @@ public class ItemSocketPart extends ItemFactorization {
     @Override
     public String getUnlocalizedName(ItemStack is) {
         int md = is.getItemDamage();
-        String ret = getUnlocalizedName() + FactoryType.fromMd((byte) md);
-        return ret;
+        return super.getUnlocalizedName(is) + FactoryType.fromMd((byte) md);
     }
     
     @Override
     @SideOnly(Side.CLIENT)
-    public void getSubItems(Item itemId, CreativeTabs tab, List list) {
+    public void getSubItems(Item itemId, CreativeTabs tab, List<ItemStack> list) {
         FactoryType[] ss = getSockets();
-        for (int i = 0; i < ss.length; i++) {
-            FactoryType ft = ss[i];
+        for (FactoryType ft : ss) {
             list.add(ft.asSocketItem());
         }
     }
@@ -112,7 +110,7 @@ public class ItemSocketPart extends ItemFactorization {
     }
     
     @Override
-    protected void addExtraInformation(ItemStack is, EntityPlayer player, List list, boolean verbose) {
+    protected void addExtraInformation(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {
         list.add(LangUtil.translate("item.factorization:socket_info"));
     }
 }

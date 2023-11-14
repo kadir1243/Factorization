@@ -11,10 +11,7 @@ import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
 import net.minecraftforge.common.util.ForgeDirection;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Random;
+import java.util.*;
 
 /**
  * Operations on AxisAlignedBB (aka 'Box'), Vec3, Entities, and conversions between the three.
@@ -26,7 +23,7 @@ public final class SpaceUtil {
     public static final byte GET_POINT_MIN = 0x0;
     public static final byte GET_POINT_MAX = 0x7;
 
-    private static ThreadLocal<ArrayList<ForgeDirection>> direction_cache = new ThreadLocal<ArrayList<ForgeDirection>>();
+    private static ThreadLocal<List<ForgeDirection>> direction_cache = new ThreadLocal<>();
 
     public static int determineOrientation(EntityPlayer player) {
         if (player.rotationPitch > 75) {
@@ -376,10 +373,10 @@ public final class SpaceUtil {
         };
     }
 
-    public static ArrayList<ForgeDirection> getRandomDirections(Random rand) {
-        ArrayList<ForgeDirection> ret = direction_cache.get();
+    public static List<ForgeDirection> getRandomDirections(Random rand) {
+        List<ForgeDirection> ret = direction_cache.get();
         if (ret == null) {
-            ret = new ArrayList(6);
+            ret = new ArrayList<>(6);
             for (int i = 0; i < 6; i++) {
                 ret.add(ForgeDirection.getOrientation(i));
             }

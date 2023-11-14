@@ -66,7 +66,7 @@ public class EvilUtil {
         maxRange *= maxRange;
         double bestDist = Double.POSITIVE_INFINITY;
         EntityPlayer best = null;
-        for (EntityPlayer player : (Iterable<EntityPlayer>) at.w.playerEntities) {
+        for (EntityPlayer player : at.w.playerEntities) {
             if (PlayerUtil.isPlayerCreative(player)) continue;
             double dist = player.getDistanceSq(at.x + 0.5, at.y + 0.5, at.z + 0.5);
             if (dist > maxRange) continue;
@@ -84,7 +84,7 @@ public class EvilUtil {
             moon = 0;
         }
         if (worldObj.isThundering()) {
-            moon += 0.75;
+            moon += 0.75F;
         }
         if (worldObj.isRaining()) {
             moon *= 2;

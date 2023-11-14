@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class DataBackup extends MergedDataHelper {
-    Map<String, Object> fields = new HashMap<String, Object>();
+    Map<String, Object> fields = new HashMap<>();
     boolean isReading = true; //Else: isRestoring
     
     @Override

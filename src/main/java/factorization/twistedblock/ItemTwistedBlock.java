@@ -2,6 +2,8 @@ package factorization.twistedblock;
 
 import java.util.List;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.block.Block;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
@@ -34,7 +36,7 @@ public class ItemTwistedBlock extends ItemBlockProxy {
         DeltaChunk.assertEnabled();
     }
     
-    final int channel = Hammer.instance.hammerInfo.makeChannelFor(Core.name, "twistedBlocks", 10, 64, "Allows placement of blocks at angles");
+    final int channel = Hammer.hammerInfo.makeChannelFor(Core.name, "twistedBlocks", 10, 64, "Allows placement of blocks at angles");
 
     @Override
     public boolean placeBlockAt(ItemStack stack, EntityPlayer player, World world, int x, int y, int z, int side,
@@ -108,7 +110,8 @@ public class ItemTwistedBlock extends ItemBlockProxy {
     }
     
     @Override
-    public void getSubItems(Item itemId, CreativeTabs tab, List list) {
+    @SideOnly(Side.CLIENT)
+    public void getSubItems(Item itemId, CreativeTabs tab, List<ItemStack> list) {
         list.add(new ItemStack(this));
     }
 

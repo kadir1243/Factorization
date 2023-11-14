@@ -126,5 +126,5 @@ public class ItemBlockProxy extends ItemFactorization {
     
     @Override
     @SideOnly(Side.CLIENT)
-    public void getSubItems(Item itemId, CreativeTabs tab, List list) { } //The items will be added elsewhere
+    public void getSubItems(Item itemId, CreativeTabs tab, List<ItemStack> list) { } //The items will be added elsewhere
 }

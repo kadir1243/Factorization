@@ -45,9 +45,9 @@ public class RecipeSlagFurnace extends TemplateRecipeHandler {
         } else {
             return;
         } 
-        for (Object o : TileEntitySlagFurnace.SlagRecipes.smeltingResults) {
+        for (SmeltingResult o : TileEntitySlagFurnace.SlagRecipes.smeltingResults) {
             if (!(o instanceof SmeltingResult)) continue;
-            SmeltingResult sr = (SmeltingResult) o;
+            SmeltingResult sr = o;
             if (ingredient == null || ingredient.isItemEqual(sr.input)) {
                 arecipes.add(new CachedSlagRecipe(sr));
             }
@@ -86,7 +86,7 @@ public class RecipeSlagFurnace extends TemplateRecipeHandler {
     }
     
     @Override
-    public List<String> handleItemTooltip(GuiRecipe gui, ItemStack stack, List<String> currenttip, int recipe) {
+    public List<String> handleItemTooltip(GuiRecipe<?> gui, ItemStack stack, List<String> currenttip, int recipe) {
         if (stack == null) {
             return currenttip;
         }

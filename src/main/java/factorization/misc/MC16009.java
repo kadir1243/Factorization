@@ -1,9 +1,6 @@
 package factorization.misc;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
@@ -34,7 +31,7 @@ public class MC16009 extends CommandBase {
     }
     
     @Override
-    public List addTabCompletionOptions(ICommandSender sender, String[] args) {
+    public List<String> addTabCompletionOptions(ICommandSender sender, String[] args) {
         return Arrays.asList(markDupes, showUUIDs);
     }
 
@@ -42,8 +39,7 @@ public class MC16009 extends CommandBase {
     public void processCommand(ICommandSender sender, String[] args) {
         if (args.length != 1) return;
         String sub = args[0];
-        if (!(sender instanceof EntityPlayer)) return;
-        EntityPlayer player = (EntityPlayer) sender;
+        if (!(sender instanceof EntityPlayer player)) return;
         if (sub.equalsIgnoreCase(markDupes)) {
             countDupeEntities(player.worldObj, player);
         } else if (sub.equalsIgnoreCase(showUUIDs)) {
@@ -53,7 +49,7 @@ public class MC16009 extends CommandBase {
     
 
     void showEntityUUIDs(World world, EntityPlayer player) {
-        for (Entity ent : (Iterable<Entity>) world.loadedEntityList) {
+        for (Entity ent : world.loadedEntityList) {
             new Notice(ent, ent.getUniqueID().toString()).send(player);
         }
     }
@@ -61,15 +57,15 @@ public class MC16009 extends CommandBase {
     void countDupeEntities(World world, EntityPlayer player) {
         int n = 0;
         int total = 0;
-        HashSet<UUID> found = new HashSet();
-        for (Entity ent : (Iterable<Entity>) world.loadedEntityList) {
+        Set<UUID> found = new HashSet<>();
+        for (Entity ent : world.loadedEntityList) {
             if (!found.add(ent.getUniqueID())) {
                 new Notice(ent, "dupe!").send(player);
                 n++;
             }
             total++;
         }
-        player.addChatMessage(new ChatComponentText("" + n + " dupes out of " + total));
+        player.addChatMessage(new ChatComponentText(n + " dupes out of " + total));
     }
     
 

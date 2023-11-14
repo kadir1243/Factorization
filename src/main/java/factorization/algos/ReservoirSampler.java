@@ -12,7 +12,7 @@ public class ReservoirSampler<E> implements Iterable<E> {
     private int given = 0;
     
     public ReservoirSampler(int desired, Random rand) {
-        samples = new ArrayList<E>(desired);
+        samples = new ArrayList<>(desired);
         this.desired = desired;
         if (rand == null) rand = new Random();
         this.rand = rand;

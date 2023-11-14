@@ -6,7 +6,6 @@ import factorization.aabbdebug.AabbDebugger;
 import factorization.algos.TortoiseAndHare;
 import factorization.api.Coord;
 import factorization.api.DeltaCoord;
-import factorization.api.ICoordFunction;
 import factorization.api.Quaternion;
 import factorization.api.datahelpers.DataHelper;
 import factorization.api.datahelpers.Share;
@@ -30,7 +29,6 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.ServerConfigurationManager;
 import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.DamageSource;
@@ -55,7 +53,7 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
     
     private final EntityReference<DimensionSliceEntity> parent; // init in constructor ._.
     private Vec3 parentShadowOrigin = Vec3.createVectorHelper(0, 0, 0);
-    private transient final ArrayList<IDeltaChunk> children = new ArrayList<IDeltaChunk>(0);
+    private transient final ArrayList<IDeltaChunk> children = new ArrayList<>(0);
     
     private long capabilities = DeltaCapability.of(DeltaCapability.MOVE, DeltaCapability.COLLIDE, DeltaCapability.DRAG, DeltaCapability.REMOVE_ITEM_ENTITIES);
     
@@ -81,7 +79,7 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
     Object renderInfo = null; //Client-side
     
     Entity packetRelay = null;
-    HashSet<IExtraChunkData> registered_chunks = new HashSet<IExtraChunkData>();
+    HashSet<IExtraChunkData> registered_chunks = new HashSet<>();
     UniversalCollider universalCollider;
     
     public DimensionSliceEntity(World world) {
@@ -91,7 +89,7 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
             setDead();
         }
         universalCollider = new UniversalCollider(this, world);
-        parent = new EntityReference<DimensionSliceEntity>(world);
+        parent = new EntityReference<>(world);
     }
     
     public DimensionSliceEntity(World world, Coord lowerCorner, Coord upperCorner) {
@@ -289,12 +287,7 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
         if (oldParent != null) {
             oldParent.children.remove(this);
         }
-        if (null != TortoiseAndHare.race(this, new TortoiseAndHare.Advancer<IDeltaChunk>() {
-            @Override
-            public IDeltaChunk getNext(IDeltaChunk node) {
-                return node.getParent();
-            }
-        })) {
+        if (null != TortoiseAndHare.race(this, IDeltaChunk::getParent)) {
             throw new IllegalArgumentException("Parenting loop!");
         }
         DimensionSliceEntity newParent = (DimensionSliceEntity) _parent;
@@ -387,7 +380,7 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
         double minZ = realArea.minZ - d;
         double maxZ = realArea.maxZ + d;
         // Check nearby areas
-        HashSet<IExtraChunkData> toDeregister = new HashSet<IExtraChunkData>(registered_chunks.size());
+        HashSet<IExtraChunkData> toDeregister = new HashSet<>(registered_chunks.size());
         toDeregister.addAll(registered_chunks);
         for (double x = minX; x <= maxX; x += 16) {
             for (double z = minZ; z <= maxZ; z += 16) {
@@ -562,8 +555,8 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
         final boolean linearMotion = parentRotation || !SpaceUtil.isZero(parentTickDisp) || hasLinearMotion();
         final boolean rotationalMotion = parentRotation || hasRotationalMotion();
         
-        Vec3 mot = null;
-        Quaternion rot = null;
+        Vec3 mot;
+        Quaternion rot;
         boolean moved = false;
 
         double prevX = posX, prevY = posY, prevZ = posZ;
@@ -650,14 +643,13 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
     }
 
     private void dragEntities(Vec3 mot, Quaternion rot) {
-        List ents = worldObj.getEntitiesWithinAABBExcludingEntity(this, metaAABB, excludeDseRelatedEntities);
+        List<Entity> ents = worldObj.getEntitiesWithinAABBExcludingEntity(this, metaAABB, excludeDseRelatedEntities);
         float dyaw = 0;
         dyaw = (float) Math.toDegrees(-rot.toRotationVector().yCoord);
         if (Float.isNaN(dyaw)) dyaw = 0;
         long now = worldObj.getTotalWorldTime() + 100 /* Hack around MixinEntityKinematicsTracker.kinematics_last_change not being initialized */;
 
-        for (int i = 0; i < ents.size(); i++) {
-            Entity e = (Entity) ents.get(i);
+        for (Entity e : ents) {
             AxisAlignedBB ebb = e.boundingBox;
             double expansion = 0;
             if (mot != null) {
@@ -706,9 +698,9 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
                 velocity.xCoord *= instant_scale;
                 velocity.yCoord *= instant_scale;
                 velocity.zCoord *= instant_scale;
-                velocity.xCoord = clipVelocity(velocity.xCoord*motion_scale, e.motionX);
-                velocity.yCoord = clipVelocity(velocity.yCoord*motion_scale, e.motionY);
-                velocity.zCoord = clipVelocity(velocity.zCoord*motion_scale, e.motionZ);
+                velocity.xCoord = clipVelocity(velocity.xCoord * motion_scale, e.motionX);
+                velocity.yCoord = clipVelocity(velocity.yCoord * motion_scale, e.motionY);
+                velocity.zCoord = clipVelocity(velocity.zCoord * motion_scale, e.motionZ);
                 e.moveEntity(velocity.xCoord, velocity.yCoord, velocity.zCoord);
                 // Hrm. Is it needed or not? Seems to cause jitterings with it on
                 //e.prevPosX += velocity.xCoord;
@@ -746,8 +738,7 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
         List<AxisAlignedBB> collisions = worldObj.getCollidingBoundingBoxes(this, realArea); // FIXME: SLOW!
         AxisAlignedBB collision = null;
         IDCController.CollisionAction action = IDCController.CollisionAction.IGNORE;
-        for (int i = 0; i < collisions.size(); i++) { // FIXME: SLOW!
-            AxisAlignedBB solid = collisions.get(i);
+        for (AxisAlignedBB solid : collisions) { // FIXME: SLOW!
             if (solid.getClass() != AxisAlignedBB.class) continue;
             AxisAlignedBB hit = metaAABB.intersectsWithGet(solid);
             if (hit != null) {
@@ -780,10 +771,9 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
 
     public Vec3 getInstRotVel(Vec3 real, Quaternion rot) {
         Vec3 dse_space = real.addVector(-posX, -posY, -posZ); // Errm, center offset?
-        Vec3 point_a = dse_space;
         Vec3 point_b = dse_space.addVector(0, 0, 0);
         rot.applyRotation(point_b);
-        return SpaceUtil.subtract(point_b, point_a);
+        return SpaceUtil.subtract(point_b, dse_space);
     }
     
     Vec3 point_a = SpaceUtil.newVec(), point_b = SpaceUtil.newVec();
@@ -886,14 +876,11 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
         if (!FzConfig.debug_fzds_collisions) return;
         if (this.metaAABB == null) return;
 
-        Coord.iterateCube(getCorner(), getFarCorner(), new ICoordFunction() {
-            @Override
-            public void handle(Coord at) {
-                if (at.isAir()) return;
-                AxisAlignedBB box = at.getCollisionBoundingBoxFromPool();
-                if (box == null) return;
-                AabbDebugger.addBox(DimensionSliceEntity.this.metaAABB.convertShadowBoxToRealBox(box));
-            }
+        Coord.iterateCube(getCorner(), getFarCorner(), at -> {
+            if (at.isAir()) return;
+            AxisAlignedBB box = at.getCollisionBoundingBoxFromPool();
+            if (box == null) return;
+            AabbDebugger.addBox(DimensionSliceEntity.this.metaAABB.convertShadowBoxToRealBox(box));
         });
     }
 
@@ -990,8 +977,7 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
     private void takeInteriorEntities() {
         //Move entities inside our bounds in the real world into the shadow world
         List<Entity> realEntities = worldObj.getEntitiesWithinAABB(Entity.class, realArea); //
-        for (int i = 0; i < realEntities.size(); i++) {
-            Entity ent = realEntities.get(i);
+        for (Entity ent : realEntities) {
             if (ent == this) {
                 continue;
             }
@@ -1010,9 +996,7 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
                 }
                 Chunk chunk = worldObj.getChunkFromBlockCoords(x, z);
                 for (int j = 0; j < chunk.entityLists.length; j++) {
-                    List<Entity> l = chunk.entityLists[j];
-                    for (int k = 0; k < l.size(); k++) {
-                        Entity ent = l.get(k); //This is probably an ArrayList.
+                    for (Entity ent : (List<Entity>) chunk.entityLists[j]) {
                         if (ent.posY < 0 || ent.posY > worldObj.getActualHeight() || ent == this /* oh god what */) {
                             continue;
                         }
@@ -1038,8 +1022,7 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
                 Chunk chunk = w.getChunkFromBlockCoords(x, z);
                 for (int j = 0; j < chunk.entityLists.length; j++) {
                     List<Entity> l = chunk.entityLists[j];
-                    for (int k = 0; k < l.size(); k++) {
-                        Entity ent = l.get(k); //This is probably an ArrayList.
+                    for (Entity ent : l) {
                         if (ent.posY < 0 || ent.posY > w.getActualHeight() || ent == this /* oh god what */) {
                             continue;
                         }
@@ -1107,13 +1090,11 @@ public class DimensionSliceEntity extends IDeltaChunk implements IFzdsEntryContr
             ((IFzdsCustomTeleport) ent).transferEntity(this, worldObj, newPosition);
             return;
         }
-        if (ent instanceof EntityPlayerMP) {
+        if (ent instanceof EntityPlayerMP player) {
             if (!can(DeltaCapability.TRANSFER_PLAYERS)) {
                 return;
             }
-            EntityPlayerMP player = (EntityPlayerMP) ent;
-            MinecraftServer ms = MinecraftServer.getServer();
-            ServerConfigurationManager manager = ms.getConfigurationManager();
+            ServerConfigurationManager manager = player.mcServer.getConfigurationManager();
             DSTeleporter tp = new DSTeleporter((WorldServer) newWorld);
             tp.preciseDestination = newPosition;
             manager.transferPlayerToDimension(player, newWorld.provider.dimensionId, tp);

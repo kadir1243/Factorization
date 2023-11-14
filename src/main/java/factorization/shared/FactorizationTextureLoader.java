@@ -5,6 +5,8 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 
@@ -26,7 +28,7 @@ public class FactorizationTextureLoader {
      * This annotation indicates that the IIcon is in a subdirectory. The following are equivalent, and will cause the icon to be registered as "servo/catGrabber"
      * <pre>
      * IIcon servo$catGrabber;
-     * @<b></b>Directory("servo")
+     * &#064;<b></b>Directory("servo")
      * IIcon catGrabber;
      * </pre>
      */
@@ -51,7 +53,7 @@ public class FactorizationTextureLoader {
         public void afterRegister() { }
     }
     
-    public static void register(IIconRegister reg, Class base, Object instance, String base_prefix) {
+    public static void register(IIconRegister reg, Class<?> base, Object instance, String base_prefix) {
         try {
             Field[] fields = base.getFields();
             for (Field f : fields) {
@@ -69,7 +71,7 @@ public class FactorizationTextureLoader {
                 if (IIconGroup.class.isAssignableFrom(f.getType())) {
                     IIconGroup ig = (IIconGroup) f.get(instance);
                     if (ig == null) {
-                        ig = (IIconGroup) f.getType().newInstance();
+                        ig = (IIconGroup) MethodHandles.lookup().findConstructor(f.getType(), MethodType.methodType(void.class)).invoke();
                     }
                     ig.prefix(f.getName());
                     f.set(instance, ig);
@@ -96,7 +98,7 @@ public class FactorizationTextureLoader {
                     }
                 }
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             // Sigh.
             throw new IllegalArgumentException(e);
         }

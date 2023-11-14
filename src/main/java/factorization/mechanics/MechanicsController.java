@@ -1,7 +1,6 @@
 package factorization.mechanics;
 
 import factorization.api.Coord;
-import factorization.api.ICoordFunction;
 import factorization.api.Quaternion;
 import factorization.fzds.TransferLib;
 import factorization.fzds.interfaces.IDCController;
@@ -100,29 +99,21 @@ public class MechanicsController implements IDCController {
         final Coord min = idc.getCorner();
         final Coord max = idc.getFarCorner();
         final Coord real = new Coord(idc);
-        Coord.iterateCube(min, max, new ICoordFunction() {
-            @Override
-            public void handle(Coord shadow) {
-                if (shadow.isAir()) return;
-                real.set(shadow);
-                idc.shadow2real(real);
-                real.x--;
-                real.y--;
-                real.z--;
-                if (real.isReplacable()) {
-                    TransferLib.move(shadow, real, true, true);
-                    real.markBlockForUpdate();
-                } else {
-                    shadow.breakBlock();
-                }
+        Coord.iterateCube(min, max, shadow -> {
+            if (shadow.isAir()) return;
+            real.set(shadow);
+            idc.shadow2real(real);
+            real.x--;
+            real.y--;
+            real.z--;
+            if (real.isReplacable()) {
+                TransferLib.move(shadow, real, true, true);
+                real.markBlockForUpdate();
+            } else {
+                shadow.breakBlock();
             }
         });
-        Coord.iterateCube(min, max, new ICoordFunction() {
-            @Override
-            public void handle(Coord here) {
-                here.setAir();
-            }
-        });
+        Coord.iterateCube(min, max, Coord::setAir);
         idc.setDead();
     }
 
@@ -273,13 +264,8 @@ public class MechanicsController implements IDCController {
      * @return The reference
      */
     static EntityReference<IDeltaChunk> autoJoin(final IDCController controller) {
-        EntityReference<IDeltaChunk> ret = new EntityReference<IDeltaChunk>();
-        ret.whenFound(new EntityReference.OnFound<IDeltaChunk>() {
-            @Override
-            public void found(IDeltaChunk ent) {
-                MechanicsController.rejoin(ent, controller);
-            }
-        });
+        EntityReference<IDeltaChunk> ret = new EntityReference<>();
+        ret.whenFound(ent -> MechanicsController.rejoin(ent, controller));
         return ret;
     }
 }

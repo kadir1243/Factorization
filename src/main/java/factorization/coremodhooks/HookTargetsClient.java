@@ -2,7 +2,6 @@ package factorization.coremodhooks;
 
 import cpw.mods.fml.common.eventhandler.EventBus;
 import factorization.util.SpaceUtil;
-import net.minecraft.client.Minecraft;
 import net.minecraft.entity.Entity;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.MovingObjectPosition;
@@ -14,12 +13,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
 
 public class HookTargetsClient {
-    public static void keyTyped(char chr, int keysym) {
-        Minecraft mc = Minecraft.getMinecraft();
-        if (mc == null) return;
-        MinecraftForge.EVENT_BUS.post(new UnhandledGuiKeyEvent(chr, keysym, mc.thePlayer, mc.currentScreen));
-    }
-    
     public static boolean attackButtonPressed() {
         return MinecraftForge.EVENT_BUS.post(new HandleAttackKeyEvent());
     }
@@ -33,8 +26,7 @@ public class HookTargetsClient {
         if (c == null) return false;
         IExtraChunkData cd = (IExtraChunkData) c;
         Entity[] colliders = cd.getConstantColliders();
-        if (colliders == null || colliders.length == 0) return false;
-        return true;
+        return colliders != null && colliders.length != 0;
     }
     
     public static MovingObjectPosition boxTrace(World world, Vec3 traceStart, Vec3 traceEnd) {
@@ -92,9 +84,9 @@ public class HookTargetsClient {
         return new MovingObjectPosition(null, hit);
     }
 
-    public static ThreadLocal<Boolean> clientWorldLoadEventAbort = new ThreadLocal<Boolean>();
+    public static ThreadLocal<Boolean> clientWorldLoadEventAbort = new ThreadLocal<>();
     public static boolean abortClientLoadEvent(EventBus bus, WorldEvent.Load event) {
-        if (clientWorldLoadEventAbort.get() == Boolean.TRUE) return false;
+        if (clientWorldLoadEventAbort.get()) return false;
         return bus.post(event);
     }
 }

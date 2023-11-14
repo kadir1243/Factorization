@@ -17,7 +17,6 @@ import net.minecraftforge.oredict.OreDictionary;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Operations on ItemStack.
@@ -61,14 +60,14 @@ public final class ItemUtil {
         if (a == null || b == null) {
             return true;
         }
-        return a.getItem() == b.getItem() && a.getItemDamage() == b.getItemDamage() && sameItemTags(a, b);
+        return a.isItemEqual(b) && sameItemTags(a, b);
     }
 
     public static boolean sameItemTags(ItemStack a, ItemStack b) {
-        if (a.stackTagCompound == null || b.stackTagCompound == null) {
-            return a.stackTagCompound == b.stackTagCompound;
+        if (!a.hasTagCompound() || !b.hasTagCompound()) {
+            return a.getTagCompound() == b.getTagCompound();
         }
-        return a.stackTagCompound.equals(b.stackTagCompound);
+        return a.getTagCompound().equals(b.getTagCompound());
     }
 
     /**
@@ -116,14 +115,14 @@ public final class ItemUtil {
     public static boolean oreDictionarySimilar(Object template, ItemStack stranger) {
         if (template instanceof String) {
             ArrayList<ItemStack> ores = OreDictionary.getOres((String) template);
-            for (int i = 0; i < ores.size(); i++) {
-                if (wildcardSimilar(ores.get(i), stranger)) {
+            for (ItemStack ore : ores) {
+                if (wildcardSimilar(ore, stranger)) {
                     return true;
                 }
             }
             return false;
-        } else if (template instanceof List) {
-            for (Object o : (List)template) {
+        } else if (template instanceof List<?> list) {
+            for (Object o : list) {
                 if (oreDictionarySimilar(o, stranger)) {
                     return true;
                 }
@@ -164,7 +163,7 @@ public final class ItemUtil {
         if (is.hasTagCompound()) {
             tg = is.getTagCompound().hashCode();
         }
-        return (ih << 48) + (md << 32) + tg + is.stackSize*100;
+        return (ih << 48) + (md << 32) + tg + is.stackSize * 100L;
     }
 
     public static String getCustomItemName(ItemStack is) {
@@ -221,7 +220,7 @@ public final class ItemUtil {
     }
 
     public static List<ItemStack> getSubItems(ItemStack is) {
-        ArrayList<ItemStack> out = new ArrayList();
+        List<ItemStack> out = new ArrayList<>();
         is.getItem().getSubItems(is.getItem(), is.getItem().getCreativeTab(), out);
         return out;
     }

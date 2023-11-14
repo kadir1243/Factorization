@@ -106,7 +106,7 @@ public class ItemPocketTable extends ItemFactorization {
     }
     
     @Override
-    public void addExtraInformation(ItemStack is, EntityPlayer player, List infoList, boolean verbose) {
+    public void addExtraInformation(ItemStack is, EntityPlayer player, List<String> infoList, boolean verbose) {
         if (player.worldObj.isRemote) {
             String key = Core.proxy.getPocketCraftingTableKey();
             if (key != null && key != "") {

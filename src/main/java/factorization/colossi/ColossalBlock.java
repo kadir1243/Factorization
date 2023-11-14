@@ -1,13 +1,17 @@
 package factorization.colossi;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
-
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import factorization.api.Coord;
 import factorization.citizen.EntityCitizen;
+import factorization.common.BlockIcons;
+import factorization.fzds.DeltaChunk;
+import factorization.fzds.TransferLib;
+import factorization.fzds.interfaces.IDeltaChunk;
+import factorization.oreprocessing.ItemOreProcessing;
 import factorization.servo.ItemMatrixProgrammer;
-import factorization.util.FzUtil;
+import factorization.shared.Core;
+import factorization.shared.Core.TabType;
 import factorization.util.PlayerUtil;
 import factorization.weird.poster.EntityPoster;
 import factorization.weird.poster.ItemSpawnPoster;
@@ -27,18 +31,12 @@ import net.minecraft.util.WeightedRandomChestContent;
 import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.World;
 import net.minecraftforge.common.ChestGenHooks;
-import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.ForgeDirection;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import factorization.api.Coord;
-import factorization.common.BlockIcons;
-import factorization.fzds.DeltaChunk;
-import factorization.fzds.TransferLib;
-import factorization.fzds.interfaces.IDeltaChunk;
-import factorization.oreprocessing.ItemOreProcessing;
-import factorization.shared.Core;
-import factorization.shared.Core.TabType;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 public class ColossalBlock extends Block {
     static final byte MD_MASK = 0, MD_BODY = 4, MD_BODY_CRACKED = 1, MD_ARM = 2, MD_LEG = 3, MD_EYE = 5, MD_CORE = 6, MD_EYE_OPEN = 7, MD_BODY_COVERED = 8, MD_MASK_CRACKED = 9;
@@ -63,22 +61,22 @@ public class ColossalBlock extends Block {
 
     @Override
     public IIcon getIcon(int side, int md) {
-        switch (md) {
-        case MD_BODY: return BlockIcons.colossi$body;
-        case MD_BODY_COVERED: return BlockIcons.colossi$body;
-        case MD_BODY_CRACKED: return BlockIcons.colossi$body_cracked;
-        case MD_ARM: return BlockIcons.colossi$arm_side; // Item-only
-        case MD_LEG: return BlockIcons.colossi$leg;
-        case MD_MASK: return BlockIcons.colossi$mask;
-        case MD_MASK_CRACKED: return BlockIcons.colossi$mask_cracked;
-        case MD_EYE: return BlockIcons.colossi$eye; // Item-only
-        case MD_CORE: {
-            if (side == EAST) return BlockIcons.colossi$core;
-            return BlockIcons.colossi$core_back;
-        }
-        case MD_EYE_OPEN: return BlockIcons.colossi$eye_open;
-        default: return super.getIcon(side, md);
-        }
+        return switch (md) {
+            case MD_BODY -> BlockIcons.colossi$body;
+            case MD_BODY_COVERED -> BlockIcons.colossi$body;
+            case MD_BODY_CRACKED -> BlockIcons.colossi$body_cracked;
+            case MD_ARM -> BlockIcons.colossi$arm_side; // Item-only
+            case MD_LEG -> BlockIcons.colossi$leg;
+            case MD_MASK -> BlockIcons.colossi$mask;
+            case MD_MASK_CRACKED -> BlockIcons.colossi$mask_cracked;
+            case MD_EYE -> BlockIcons.colossi$eye; // Item-only
+            case MD_CORE -> {
+                if (side == EAST) yield BlockIcons.colossi$core;
+                yield BlockIcons.colossi$core_back;
+            }
+            case MD_EYE_OPEN -> BlockIcons.colossi$eye_open;
+            default -> super.getIcon(side, md);
+        };
     }
     
     @Override
@@ -136,7 +134,7 @@ public class ColossalBlock extends Block {
     public void registerBlockIcons(IIconRegister iconRegistry) { }
     
     @Override
-    public void getSubBlocks(Item item, CreativeTabs tab, List list) {
+    public void getSubBlocks(Item item, CreativeTabs tab, List<ItemStack> list) {
         for (byte md = MD_MASK; md <= MD_MASK_CRACKED; md++) {
             if (md == MD_BODY_COVERED) continue; // Technical block; skip
             list.add(new ItemStack(this, 1, md));
@@ -151,7 +149,7 @@ public class ColossalBlock extends Block {
         // No LMP: only the core drops the LMP.
         fractureChest.addItem(new WeightedRandomChestContent(new ItemStack(Core.registry.logicMatrixIdentifier), 1, 1, 6));
         fractureChest.addItem(new WeightedRandomChestContent(new ItemStack(Core.registry.logicMatrixController), 1, 1, 6));
-        fractureChest.addItem(new WeightedRandomChestContent(new ItemStack(Core.registry.ore_crystal, 1, ItemOreProcessing.OreType.DARKIRON.ID), 1, 2, 12));
+        fractureChest.addItem(new WeightedRandomChestContent(ItemOreProcessing.OreType.DARKIRON.getStack("crystal"), 1, 2, 12));
         fractureChest.addItem(new WeightedRandomChestContent(Core.registry.dark_iron_sprocket.copy(), 2, 4, 1));
 
         return fractureChest;
@@ -159,7 +157,7 @@ public class ColossalBlock extends Block {
     
     @Override
     public ArrayList<ItemStack> getDrops(World world, int x, int y, int z, int md, int fortune) {
-        ArrayList<ItemStack> ret = new ArrayList();
+        ArrayList<ItemStack> ret = new ArrayList<>();
         if (md == MD_MASK) {
             ret.add(new ItemStack(this, 1, md));
         }

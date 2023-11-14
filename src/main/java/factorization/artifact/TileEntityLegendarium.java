@@ -48,7 +48,7 @@ public class TileEntityLegendarium extends TileEntityCommon {
     private static final int WAIT_TIME = DEBUG ? 4 * 1000 : FzConfig.legendarium_delay_hours * 60 * 60 * 1000;
 
     long last_insert_time = 0;
-    ArrayList<ItemStack> queue = new ArrayList<ItemStack>();
+    private ArrayList<ItemStack> queue = new ArrayList<>();
 
     @Override
     public void putData(DataHelper data) throws IOException {
@@ -204,7 +204,7 @@ public class TileEntityLegendarium extends TileEntityCommon {
 
         @Override
         public void writeToNBT(NBTTagCompound tag) {
-            for (String key : (Iterable<String>) data.func_150296_c()) {
+            for (String key : data.func_150296_c()) {
                 tag.setInteger(key, data.getInteger(key));
             }
         }
@@ -305,15 +305,10 @@ public class TileEntityLegendarium extends TileEntityCommon {
         Coord max = new Coord(this).add(+POSTER_RANGE, +POSTER_RANGE, +POSTER_RANGE);
         AxisAlignedBB box = SpaceUtil.createAABB(min, max);
         List<EntityPoster> ret = worldObj.getEntitiesWithinAABB(EntityPoster.class, box);
-        Collections.sort(ret, new Comparator<EntityPoster>() {
-            @Override
-            public int compare(EntityPoster o1, EntityPoster o2) {
-                double d1 = o1.getDistanceSq(xCoord, yCoord, zCoord);
-                double d2 = o2.getDistanceSq(xCoord, yCoord, zCoord);
-                if (d1 > d2) return +1;
-                if (d1 < d2) return -1;
-                return 0;
-            }
+        ret.sort((o1, o2) -> {
+            double d1 = o1.getDistanceSq(xCoord, yCoord, zCoord);
+            double d2 = o2.getDistanceSq(xCoord, yCoord, zCoord);
+            return Double.compare(d1, d2);
         });
         return ret;
     }
@@ -375,7 +370,7 @@ public class TileEntityLegendarium extends TileEntityCommon {
                         return;
                     }
                     // Ahh, a tough guy, eh? We'll just see 'bout that!
-                    ArrayList<String> out = new ArrayList<String>();
+                    ArrayList<String> out = new ArrayList<>();
                     String build = "";
                     int total = 0;
                     for (String word : name.split(" ")) {
@@ -412,17 +407,12 @@ public class TileEntityLegendarium extends TileEntityCommon {
             poster.setLocked(false);
             poster.syncData();
             ret++;
-            ICoordFunction clearSign = new ICoordFunction() {
-                @Override
-                public void handle(Coord here) {
-                    if (!(here.getBlock() instanceof BlockSign)) return;
-                    TileEntitySign sign = here.getTE(TileEntitySign.class);
-                    if (sign == null) return;
-                    for (int i = 0; i < sign.signText.length; i++) {
-                        sign.signText[i] = "";
-                    }
-                    here.markBlockForUpdate();
-                }
+            ICoordFunction clearSign = here -> {
+                if (!(here.getBlock() instanceof BlockSign)) return;
+                TileEntitySign sign = here.getTE(TileEntitySign.class);
+                if (sign == null) return;
+                Arrays.fill(sign.signText, "");
+                here.markBlockForUpdate();
             };
             iterateSign(poster, clearSign);
         }

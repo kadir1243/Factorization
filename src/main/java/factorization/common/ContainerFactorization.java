@@ -1,8 +1,11 @@
 package factorization.common;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
+import factorization.crafting.TileEntityMixer;
+import factorization.crafting.TileEntityStamper;
+import factorization.oreprocessing.TileEntityCrystallizer;
+import factorization.oreprocessing.TileEntitySlagFurnace;
+import factorization.redstone.TileEntityParaSieve;
+import factorization.shared.TileEntityFactorization;
 import factorization.util.InvUtil;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
@@ -13,12 +16,9 @@ import net.minecraft.inventory.SlotFurnace;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntityFurnace;
-import factorization.crafting.TileEntityMixer;
-import factorization.crafting.TileEntityStamper;
-import factorization.oreprocessing.TileEntityCrystallizer;
-import factorization.oreprocessing.TileEntitySlagFurnace;
-import factorization.redstone.TileEntityParaSieve;
-import factorization.shared.TileEntityFactorization;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class ContainerFactorization extends Container {
     public TileEntityFactorization factory;
@@ -167,11 +167,10 @@ public class ContainerFactorization extends Container {
         return factory.isUseableByPlayer(entityplayer);
     }
 
-    @SuppressWarnings("incomplete-switch")
     @Override
     //transferStackInSlot
     public ItemStack transferStackInSlot(EntityPlayer player, int i) {
-        Slot slot = (Slot) inventorySlots.get(i);
+        Slot slot = inventorySlots.get(i);
         ItemStack itemstack = slot.getStack();
         if (itemstack == null) {
             return null;
@@ -182,32 +181,32 @@ public class ContainerFactorization extends Container {
         case SLAGFURNACE:
             if (i >= 4) {
                 if (TileEntityFurnace.getItemBurnTime(itemstack) > 0) {
-                    return InvUtil.transferSlotToSlots(player, slot, Arrays.asList((Slot) inventorySlots.get(1)));
+                    return InvUtil.transferSlotToSlots(player, slot, Collections.singletonList(inventorySlots.get(1)));
                 } else {
-                    return InvUtil.transferSlotToSlots(player, slot, Arrays.asList((Slot) inventorySlots.get(0)));
+                    return InvUtil.transferSlotToSlots(player, slot, Collections.singletonList(inventorySlots.get(0)));
                 }
             }
             break;
         case STAMPER:
         case PACKAGER:
             if (i >= 2) {
-                return InvUtil.transferSlotToSlots(player, slot, Arrays.asList((Slot) inventorySlots.get(0)));
+                return InvUtil.transferSlotToSlots(player, slot, Collections.singletonList(inventorySlots.get(0)));
             }
             break;
         case MIXER:
             if (i >= 8) {
-                ArrayList<Slot> av = new ArrayList(4);
+                ArrayList<Slot> av = new ArrayList<>(4);
                 for (int j = 0; j < 4; j++) {
-                    av.add((Slot)inventorySlots.get(j));
+                    av.add(inventorySlots.get(j));
                 }
                 return InvUtil.transferSlotToSlots(player, slot, av);
             }
             break;
         case CRYSTALLIZER:
             if (i >= 8) {
-                ArrayList<Slot> av = new ArrayList(6);
+                ArrayList<Slot> av = new ArrayList<>(6);
                 for (int j = 0; j < 6; j++) {
-                    av.add((Slot)inventorySlots.get(j));
+                    av.add(inventorySlots.get(j));
                 }
                 return InvUtil.transferSlotToSlots(player, slot, av);
             }

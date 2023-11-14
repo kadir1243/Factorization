@@ -1,20 +1,14 @@
 package factorization.rendersorting;
 
-import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import factorization.shared.Core;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.entity.Entity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.IIcon;
 import net.minecraft.world.World;
 import net.minecraftforge.client.IItemRenderer;
 import net.minecraftforge.client.MinecraftForgeClient;
@@ -24,8 +18,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-
-import static net.minecraftforge.client.IItemRenderer.ItemRenderType.ENTITY;
 
 public class RenderSorter implements Comparator<Object> {
     public static void dirtyTileEntity(TileEntity te) {
@@ -39,8 +31,8 @@ public class RenderSorter implements Comparator<Object> {
     public static void dirtyEntity(Entity ent) {
         if (!ent.worldObj.isRemote) return;
         List ents = ent.worldObj.loadedEntityList;
-        if (ents instanceof CleaningList) {
-            ((CleaningList) ents).setDirty();
+        if (ents instanceof CleaningList<?>) {
+            ((CleaningList<?>) ents).setDirty();
         }
     }
 
@@ -78,10 +70,9 @@ public class RenderSorter implements Comparator<Object> {
     private int tick = 0;
 
     private void sort(List list) {
-        if (!(list instanceof CleaningList)) return;
-        CleaningList ls = (CleaningList) list;
+        if (!(list instanceof CleaningList ls)) return;
         if (ls.setClean()) return;
-        Collections.sort(ls, this);
+        ls.sort(this);
     }
 
     @Override
@@ -90,12 +81,11 @@ public class RenderSorter implements Comparator<Object> {
             return 0;
         }
 
-        Class aClass = a.getClass();
-        Class bClass = b.getClass();
+        Class<?> aClass = a.getClass();
+        Class<?> bClass = b.getClass();
 
         if (aClass != bClass) return aClass.getCanonicalName().compareTo(bClass.getCanonicalName());
-        if (a instanceof ISortableRenderer) {
-            ISortableRenderer ai = (ISortableRenderer) a;
+        if (a instanceof ISortableRenderer ai) {
             return ai.compareRenderer(b);
         }
         return 0;

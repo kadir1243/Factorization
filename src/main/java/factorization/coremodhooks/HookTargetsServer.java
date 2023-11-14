@@ -12,7 +12,6 @@ import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class HookTargetsServer {
@@ -48,7 +47,7 @@ public class HookTargetsServer {
         return r;
     }
 
-    public static void addConstantColliders(Object me, Entity collider, AxisAlignedBB box, List found, IEntitySelector filter) {
+    public static void addConstantColliders(Object me, Entity collider, AxisAlignedBB box, List<Entity> found, IEntitySelector filter) {
         Entity[] constant_colliders = ((IExtraChunkData) me).getConstantColliders();
         if (constant_colliders == null) return;
         for (Entity ent : constant_colliders) {

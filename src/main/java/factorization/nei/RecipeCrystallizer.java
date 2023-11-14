@@ -77,7 +77,7 @@ public class RecipeCrystallizer extends TemplateRecipeHandler  {
 
         @Override
         public ArrayList<PositionedStack> getOtherStacks() {
-            ArrayList<PositionedStack> ret = new ArrayList();
+            ArrayList<PositionedStack> ret = new ArrayList<>();
             ret.add(new PositionedStack(cr.input, 75, 2 + 15));
             ret.add(new PositionedStack(cr.solution, 75, 58 + 15));
             ret.add(new PositionedStack(Core.registry.heater_item, 0, 75));

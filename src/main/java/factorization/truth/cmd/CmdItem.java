@@ -9,12 +9,13 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class CmdItem implements ITypesetCommand {
 
     ItemWord getWord(ITypesetter out, ITokenizer tokenizer) throws TruthError {
         String itemName = tokenizer.getParameter("No item specified");
-        ArrayList<ItemStack> items;
+        List<ItemStack> items;
 
         String stackSizeS = tokenizer.getOptionalParameter();
         if (stackSizeS == null) {
@@ -24,7 +25,7 @@ public class CmdItem implements ITypesetCommand {
             if (dmgS == null) dmgS = "0"; // intellij says it can not be null. Yes it can?
             int dmg = Integer.parseInt(dmgS);
             int stackSize = Integer.parseInt(stackSizeS);
-            items = new ArrayList<ItemStack>();
+            items = new ArrayList<>();
             Block b = DataUtil.getBlockFromName(itemName);
             Item it = DataUtil.getItemFromName(itemName);
             if (b != null) {
@@ -43,7 +44,7 @@ public class CmdItem implements ITypesetCommand {
         if (items.size() == 1) {
             return new ItemWord(items.get(0));
         } else {
-            ItemStack[] theItems = items.toArray(new ItemStack[items.size()]);
+            ItemStack[] theItems = items.toArray(new ItemStack[0]);
             return new ItemWord(theItems);
         }
     }

@@ -155,7 +155,7 @@ public class ItemGlazeBucket extends ItemFactorization {
     
     @Override
     @SideOnly(Side.CLIENT)
-    public void getSubItems(Item itemId, CreativeTabs tab, List list) {
+    public void getSubItems(Item itemId, CreativeTabs tab, List<ItemStack> list) {
         list.addAll(subItems);
     }
     

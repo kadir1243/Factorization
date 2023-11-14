@@ -1,23 +1,21 @@
 package factorization.colossi;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.Random;
-
+import factorization.api.Coord;
+import factorization.api.DeltaCoord;
+import factorization.api.ICoordFunction;
+import factorization.colossi.Brush.BrushMask;
+import factorization.shared.Core;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockFalling;
 import net.minecraft.init.Blocks;
 import net.minecraft.world.biome.BiomeGenBase;
 import net.minecraft.world.gen.NoiseGeneratorOctaves;
 import net.minecraftforge.common.util.ForgeDirection;
-import factorization.api.Coord;
-import factorization.api.DeltaCoord;
-import factorization.api.ICoordFunction;
-import factorization.colossi.Brush.BrushMask;
-import factorization.shared.Core;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Random;
 
 public class ColossalBuilder {
     final int seed;
@@ -283,7 +281,7 @@ public class ColossalBuilder {
         final DeltaCoord size;
         final double len;
         
-        final HashSet<Coord> painted = new HashSet();
+        final HashSet<Coord> painted = new HashSet<>();
         
         Drawer() {
             Coord.sort(blobStart, blobEnd);
@@ -346,14 +344,11 @@ public class ColossalBuilder {
         }
         
         void generateBlob() {
-            Coord.iterateEmptyBox(bodyStart, bodyEnd, new ICoordFunction() {
-                @Override
-                public void handle(Coord here) {
-                    if (here.x >= bodyEnd.x - leg_size/2 || here.z == bodyStart.z || here.z == bodyEnd.z) return;
-                    reset();
-                    double val = sample(here);
-                    paint(here, (int) (val + 1.9));
-                }
+            Coord.iterateEmptyBox(bodyStart, bodyEnd, here -> {
+                if (here.x >= bodyEnd.x - leg_size/2 || here.z == bodyStart.z || here.z == bodyEnd.z) return;
+                reset();
+                double val = sample(here);
+                paint(here, (int) (val + 1.9));
             });
         }
         
@@ -396,16 +391,12 @@ public class ColossalBuilder {
                 break;
             }
             if (biome == null) return;
-            ArrayList<Coord> sorted = new ArrayList();
-            sorted.addAll(painted);
-            Collections.sort(sorted, new Comparator<Coord>() {
-                @Override
-                public int compare(Coord a, Coord b) {
-                    if (a.x == b.x) {
-                        return a.z - b.z;
-                    }
-                    return a.x - b.x;
+            ArrayList<Coord> sorted = new ArrayList<>(painted);
+            sorted.sort((a, b) -> {
+                if (a.x == b.x) {
+                    return a.z - b.z;
                 }
+                return a.x - b.x;
             });
             Block[] blocks = new Block[0x100];
             byte[] mds = new byte[0x100];

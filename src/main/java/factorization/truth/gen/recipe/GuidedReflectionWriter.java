@@ -45,7 +45,7 @@ public class GuidedReflectionWriter<T> implements IObjectWriter<T> {
     final String text;
 
     public static void register(NBTTagCompound tag) throws ClassNotFoundException, NoSuchMethodException, NoSuchFieldException {
-        GuidedReflectionWriter<Object> writer = new GuidedReflectionWriter<Object>(tag);
+        GuidedReflectionWriter<Object> writer = new GuidedReflectionWriter<>(tag);
         String label = tag.getString("category").split("\\|")[0];
         RecipeViewer.instance.guiders.put(label, writer);
     }
@@ -58,17 +58,17 @@ public class GuidedReflectionWriter<T> implements IObjectWriter<T> {
     }
 
     ReflectionExpression[] read(NBTTagCompound tag, String keyName) throws NoSuchMethodException, NoSuchFieldException {
-        ArrayList<ReflectionExpression> out = new ArrayList<ReflectionExpression>();
+        ArrayList<ReflectionExpression> out = new ArrayList<>();
         NBTTagList list = tag.getTagList(keyName, Constants.NBT.TAG_STRING);
         for (int i = 0; i < list.tagCount(); i++) {
             String s = list.getStringTagAt(i);
             out.add(new ReflectionExpression(s));
         }
-        return out.toArray(new ReflectionExpression[out.size()]);
+        return out.toArray(new ReflectionExpression[0]);
     }
 
     @Override
-    public void writeObject(List out, T val, IObjectWriter<Object> generic) {
+    public void writeObject(List<Object> out, T val, IObjectWriter<Object> generic) {
         write(output, out, val, generic);
         write(input, out, val, generic);
         write(catalyst, out, val, generic);
@@ -101,13 +101,11 @@ public class GuidedReflectionWriter<T> implements IObjectWriter<T> {
                 if (maybeGeneric) {
                     if (v instanceof ItemStack) {
                         is = (ItemStack) v;
-                    } else if (v instanceof ItemStack[]) {
-                        ItemStack[] array = (ItemStack[]) v;
+                    } else if (v instanceof ItemStack[] array) {
                         if (array.length > 0) {
                             is = array[0];
                         }
-                    } else if (v instanceof Collection) {
-                        Collection c = (Collection) v;
+                    } else if (v instanceof Collection<?> c) {
                         if (c.size() == 1) {
                             Object next = c.iterator().next();
                             if (next instanceof ItemStack) {
@@ -141,20 +139,20 @@ class ReflectionExpression {
     void parse(Object walker, String exprBody) throws NoSuchMethodException, NoSuchFieldException, InvocationTargetException, IllegalAccessException {
         Class<?> head = walker.getClass();
         if (exprBody.contains("#")) {
-            String parts[] = exprBody.split("#");
+            String[] parts = exprBody.split("#");
             exprBody = parts[0];
             prefix = parts[1];
         } else {
             prefix = null;
         }
-        ArrayList<ReflectionComponent> found = new ArrayList<ReflectionComponent>();
+        ArrayList<ReflectionComponent> found = new ArrayList<>();
         for (String part : Splitter.on(".").split(exprBody)) {
             ReflectionComponent rc = new ReflectionComponent(head, part);
             walker = rc.get(walker);
             head = walker.getClass();
             found.add(rc);
         }
-        this.parts = found.toArray(new ReflectionComponent[found.size()]);
+        this.parts = found.toArray(new ReflectionComponent[0]);
     }
 
     Object get(Object val) throws InvocationTargetException, IllegalAccessException, NoSuchMethodException, NoSuchFieldException {
@@ -217,21 +215,21 @@ class ReflectionComponent {
         if (nbtKey != null) {
             NBTTagCompound tag = (NBTTagCompound) src;
             NBTBase value = tag.getTag(nbtKey);
-            switch (value.getId()) {
-                case Constants.NBT.TAG_END: return null;
-                case Constants.NBT.TAG_BYTE: return "" + ((NBTTagByte) value).func_150290_f();
-                case Constants.NBT.TAG_SHORT: return "" + ((NBTTagShort) value).func_150289_e();
-                case Constants.NBT.TAG_INT: return "" + ((NBTTagInt) value).func_150287_d();
-                case Constants.NBT.TAG_LONG: return "" + ((NBTTagLong) value).func_150291_c();
-                case Constants.NBT.TAG_FLOAT: return "" + ((NBTTagFloat) value).func_150288_h();
-                case Constants.NBT.TAG_DOUBLE: return "" + ((NBTTagDouble) value).func_150286_g();
-                case Constants.NBT.TAG_BYTE_ARRAY: return null; // No way to handle
-                case Constants.NBT.TAG_STRING: return ((NBTTagString) value).func_150285_a_();
-                case Constants.NBT.TAG_LIST: return null; // No way to handle
-                case Constants.NBT.TAG_COMPOUND: return value;
-                case Constants.NBT.TAG_INT_ARRAY: return null; // No way to handle
-                default: return null;
-            }
+            return switch (value.getId()) {
+                case Constants.NBT.TAG_END -> null;
+                case Constants.NBT.TAG_BYTE -> "" + ((NBTTagByte) value).func_150290_f();
+                case Constants.NBT.TAG_SHORT -> "" + ((NBTTagShort) value).func_150289_e();
+                case Constants.NBT.TAG_INT -> "" + ((NBTTagInt) value).func_150287_d();
+                case Constants.NBT.TAG_LONG -> "" + ((NBTTagLong) value).func_150291_c();
+                case Constants.NBT.TAG_FLOAT -> "" + ((NBTTagFloat) value).func_150288_h();
+                case Constants.NBT.TAG_DOUBLE -> "" + ((NBTTagDouble) value).func_150286_g();
+                case Constants.NBT.TAG_BYTE_ARRAY -> null; // No way to handle
+                case Constants.NBT.TAG_STRING -> ((NBTTagString) value).func_150285_a_();
+                case Constants.NBT.TAG_LIST -> null; // No way to handle
+                case Constants.NBT.TAG_COMPOUND -> value;
+                case Constants.NBT.TAG_INT_ARRAY -> null; // No way to handle
+                default -> null;
+            };
         }
         if (field != null) return field.get(src);
         return method.invoke(src);

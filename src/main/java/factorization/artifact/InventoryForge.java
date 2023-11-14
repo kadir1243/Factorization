@@ -6,17 +6,13 @@ import factorization.util.NumUtil;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.inventory.Container;
 import net.minecraft.inventory.ContainerRepair;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
 import net.minecraft.util.StringUtils;
 import net.minecraftforge.oredict.OreDictionary;
-import org.omg.IOP.TaggedComponent;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -261,7 +257,7 @@ public class InventoryForge implements IInventory {
             boolean gave_unbreaking = false;
             {
                 Map<Integer, Integer> /* EnchantId -> enchantLevel */ enchants = EnchantmentHelper.getEnchantments(output);
-                ArrayList<Integer> enchantIds = new ArrayList<Integer>(enchants.keySet());
+                ArrayList<Integer> enchantIds = new ArrayList<>(enchants.keySet());
                 boolean any = false;
                 for (int id : enchantIds) {
                     Enchantment ench = Enchantment.enchantmentsList[id];

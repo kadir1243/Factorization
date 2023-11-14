@@ -2,7 +2,6 @@ package factorization.truth;
 
 import factorization.api.Coord;
 import factorization.api.DeltaCoord;
-import factorization.api.ICoordFunction;
 import factorization.notify.Notice;
 import factorization.util.FzUtil;
 import factorization.util.PlayerUtil;
@@ -23,8 +22,7 @@ import java.util.List;
 final class FzdocSerialize implements ICommand {
     @Override
     public int compareTo(Object arg0) {
-        if (arg0 instanceof ICommand) {
-            ICommand other = (ICommand) arg0;
+        if (arg0 instanceof ICommand other) {
             return getCommandName().compareTo(other.getCommandName());
         }
         return 0;
@@ -41,7 +39,7 @@ final class FzdocSerialize implements ICommand {
     }
 
     @Override
-    public List getCommandAliases() { return null; }
+    public List<String> getCommandAliases() { return null; }
 
     @Override
     public boolean canCommandSenderUseCommand(ICommandSender icommandsender) {
@@ -49,15 +47,14 @@ final class FzdocSerialize implements ICommand {
     }
 
     @Override
-    public List addTabCompletionOptions(ICommandSender icommandsender, String[] astring) { return null; }
+    public List<String> addTabCompletionOptions(ICommandSender icommandsender, String[] astring) { return null; }
 
     @Override
     public boolean isUsernameIndex(String[] astring, int i) { return false; }
 
     @Override
     public void processCommand(ICommandSender icommandsender, String[] astring) {
-        if (!(icommandsender instanceof EntityPlayer)) return;
-        EntityPlayer player = (EntityPlayer) icommandsender;
+        if (!(icommandsender instanceof EntityPlayer player)) return;
         Coord peak = new Coord(player).add(ForgeDirection.DOWN);
         Block gold = Blocks.gold_block;
         if (!peak.is(gold)) {
@@ -117,11 +114,11 @@ final class FzdocSerialize implements ICommand {
     DocWorld copyChunkToWorld(final Coord min, final Coord max) {
         final DocWorld w = new DocWorld();
         final DeltaCoord start = new DeltaCoord(0, 0, 0); //size.add(maxSize.incrScale(-1)).incrScale(0.5);
-        Coord.iterateCube(min, max, new ICoordFunction() { @Override public void handle(Coord here) {
+        Coord.iterateCube(min, max, here -> {
             if (here.isAir()) return;
             DeltaCoord dc = here.difference(min).add(start);
             w.setIdMdTe(dc, here.getId(), here.getMd(), here.getTE());
-        }});
+        });
         DeltaCoord d = max.difference(min);
         d.y /= 2; // The top always points up, so it can be pretty tall
         w.diagonal = (int) (d.magnitude() + 1);
@@ -132,7 +129,7 @@ final class FzdocSerialize implements ICommand {
 
     void copyEntities(DocWorld dw20, Coord min, Coord max) {
         AxisAlignedBB ab = Coord.aabbFromRange(min, max);
-        List<Entity> ents = (List<Entity>) min.w.getEntitiesWithinAABBExcludingEntity(null, ab);
+        List<Entity> ents = min.w.getEntitiesWithinAABBExcludingEntity(null, ab);
         for (Entity ent : ents) {
             if (ent instanceof EntityPlayer) {
                 continue; //??? We probably could get away with it...

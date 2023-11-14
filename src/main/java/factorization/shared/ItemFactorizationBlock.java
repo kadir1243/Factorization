@@ -1,24 +1,24 @@
 package factorization.shared;
 
-import java.util.List;
-
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import factorization.api.Coord;
+import factorization.ceramics.TileEntityGreenware;
+import factorization.ceramics.TileEntityGreenware.ClayState;
+import factorization.charge.TileEntityLeydenJar;
+import factorization.common.FactoryType;
 import factorization.util.ItemUtil;
 import net.minecraft.block.Block;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.IIcon;
 import net.minecraft.util.StatCollector;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
-import factorization.api.Coord;
-import factorization.astro.TileEntityRocketEngine;
-import factorization.ceramics.TileEntityGreenware;
-import factorization.ceramics.TileEntityGreenware.ClayState;
-import factorization.charge.TileEntityLeydenJar;
-import factorization.common.FactoryType;
+
+import java.util.List;
 
 public class ItemFactorizationBlock extends ItemBlock {
     public ItemFactorizationBlock(Block id) {
@@ -76,7 +76,8 @@ public class ItemFactorizationBlock extends ItemBlock {
     }
 
     @Override
-    public void addInformation(ItemStack is, EntityPlayer player, List infoList, boolean verbose) {
+    @SideOnly(Side.CLIENT)
+    public void addInformation(ItemStack is, EntityPlayer player, List<String> infoList, boolean verbose) {
         if (Core.registry.greenware_item != null && is.isItemEqual(Core.registry.greenware_item) /* required to not compare NBT here */) {
             NBTTagCompound tag = is.getTagCompound();
             if (tag != null) {
@@ -99,10 +100,5 @@ public class ItemFactorizationBlock extends ItemBlock {
             infoList.add(StatCollector.translateToLocalFormatted("factorization.factoryBlock.LEYDENJAR.perc", perc));
         }
         Core.brand(is, player, infoList, verbose);
-    }
-    
-    @Override
-    public boolean getShareTag() {
-        return true;
     }
 }

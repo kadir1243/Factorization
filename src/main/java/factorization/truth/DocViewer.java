@@ -5,7 +5,6 @@ import factorization.truth.api.IWord;
 import factorization.truth.api.TruthError;
 import factorization.truth.gen.recipe.RecipeViewer;
 import factorization.truth.minecraft.GuiButtonNextPage;
-import factorization.truth.word.Word;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.GuiButton;
@@ -38,11 +37,11 @@ public class DocViewer extends GuiScreen {
 
     private final PersistentState state;
 
-    public static HashMap<String, PersistentState> per_domain_state = new HashMap<String, PersistentState>();
+    public static HashMap<String, PersistentState> per_domain_state = new HashMap<>();
 
     public static class PersistentState {
         public boolean dark_color_scheme = false;
-        public Deque<HistoryPage> the_pageHistory = new ArrayDeque<HistoryPage>();
+        public Deque<HistoryPage> the_pageHistory = new ArrayDeque<>();
         public String current_page = "index";
         public int current_index = 0;
 

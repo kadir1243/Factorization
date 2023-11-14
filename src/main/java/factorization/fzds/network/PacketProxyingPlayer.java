@@ -5,7 +5,6 @@ import cpw.mods.fml.common.network.handshake.NetworkDispatcher;
 import cpw.mods.fml.relauncher.Side;
 import factorization.api.Coord;
 import factorization.api.DeltaCoord;
-import factorization.api.ICoordFunction;
 import factorization.fzds.DeltaChunk;
 import factorization.fzds.DimensionSliceEntity;
 import factorization.fzds.Hammer;
@@ -13,12 +12,10 @@ import factorization.fzds.interfaces.IDeltaChunk;
 import factorization.fzds.interfaces.IFzdsEntryControl;
 import factorization.fzds.interfaces.IFzdsShenanigans;
 import factorization.shared.Core;
-import factorization.util.SpaceUtil;
-import io.netty.channel.*;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelOutboundHandlerAdapter;
+import io.netty.channel.ChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityTracker;
-import net.minecraft.entity.EntityTrackerEntry;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.network.EnumConnectionState;
@@ -26,11 +23,9 @@ import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.Packet;
 import net.minecraft.network.play.server.S26PacketMapChunkBulk;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.ItemInWorldManager;
 import net.minecraft.server.management.ServerConfigurationManager;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
@@ -41,10 +36,10 @@ import java.util.*;
 
 public class PacketProxyingPlayer extends EntityPlayerMP implements
         IFzdsEntryControl, IFzdsShenanigans {
-    WeakReference<DimensionSliceEntity> dimensionSlice = new WeakReference<DimensionSliceEntity>(null);
+    WeakReference<DimensionSliceEntity> dimensionSlice = new WeakReference<>(null);
     static boolean useShortViewRadius = true; // true doesn't actually change the view radius
 
-    private HashSet<EntityPlayerMP> listeningPlayers = new HashSet();
+    private Set<EntityPlayerMP> listeningPlayers = new HashSet<>();
     
     
     
@@ -91,39 +86,34 @@ public class PacketProxyingPlayer extends EntityPlayerMP implements
     }
 
     private Set<Chunk> getChunks() {
-        final HashSet<Chunk> ret = new HashSet<Chunk>();
+        final HashSet<Chunk> ret = new HashSet<>();
         DimensionSliceEntity dse = dimensionSlice.get();
         if (dse == null) return ret;
         Coord min = dse.getCorner();
         Coord max = dse.getFarCorner();
-        Coord.iterateChunks(min, max, new ICoordFunction() {
-            @Override
-            public void handle(Coord here) {
-                ret.add(here.getChunk());
-            }
-        });
+        Coord.iterateChunks(min, max, here -> ret.add(here.getChunk()));
         return ret;
     }
 
     private static final UUID proxyUuid = UUID.fromString("69f64f92-665f-457e-ad33-f6082d0b8a75");
 
     public PacketProxyingPlayer(final DimensionSliceEntity dimensionSlice, World shadowWorld) {
-        super(MinecraftServer.getServer(), (WorldServer) shadowWorld, new GameProfile(proxyUuid, "[FzdsPacket]"), new ItemInWorldManager(shadowWorld));
+        super(((WorldServer) shadowWorld).func_73046_m(/*getServer*/), (WorldServer) shadowWorld, new GameProfile(proxyUuid, "[FzdsPacket]"), new ItemInWorldManager(shadowWorld));
         invulnerable = true;
         isImmuneToFire = true;
-        this.dimensionSlice = new WeakReference<DimensionSliceEntity>(dimensionSlice);
+        this.dimensionSlice = new WeakReference<>(dimensionSlice);
         Coord c = dimensionSlice.getCenter();
         c.y = -8; // lurk in the void; we should catch most mod's packets.
         DeltaCoord size = dimensionSlice.getFarCorner().difference(dimensionSlice.getCorner());
         size.y = 0;
         int width = Math.abs(size.x);
         int depth = Math.abs(size.z);
-        double blockRadius = Math.max(width, depth) / 2;
+        double blockRadius = (double) Math.max(width, depth) / 2;
         int chunkRadius = (int) ((blockRadius / 16) + 2);
         chunkRadius = Math.max(3, chunkRadius);
         c.setAsEntityLocation(this);
         preinitWrapping();
-        ServerConfigurationManager scm = MinecraftServer.getServer().getConfigurationManager();
+        ServerConfigurationManager scm = mcServer.getConfigurationManager();
         if (useShortViewRadius) {
             int orig = savePlayerViewRadius();
             restorePlayerViewRadius(chunkRadius);
@@ -165,13 +155,11 @@ public class PacketProxyingPlayer extends EntityPlayerMP implements
     }
 
     void updateListenerList() {
-        List playerList = getTargetablePlayers();
-        for (int i = 0; i < playerList.size(); i++) {
-            Object o = playerList.get(i);
-            if (!(o instanceof EntityPlayerMP)) {
+        List<EntityPlayer> playerList = getTargetablePlayers();
+        for (EntityPlayer o : playerList) {
+            if (!(o instanceof EntityPlayerMP player)) {
                 continue;
             }
-            EntityPlayerMP player = (EntityPlayerMP) o;
             if (isPlayerInUpdateRange(player)) {
                 boolean new_player = listeningPlayers.add(player);
                 if (new_player && shouldShareChunks()) {
@@ -184,11 +172,9 @@ public class PacketProxyingPlayer extends EntityPlayerMP implements
         }
     }
 
-    static final ArrayList empty = new ArrayList();
-
-    List getTargetablePlayers() {
+    private List<EntityPlayer> getTargetablePlayers() {
         DimensionSliceEntity dse = dimensionSlice.get();
-        if (dse == null) return empty;
+        if (dse == null) return Collections.emptyList();
         return dse.worldObj.playerEntities;
     }
 
@@ -206,8 +192,8 @@ public class PacketProxyingPlayer extends EntityPlayerMP implements
         DimensionSliceEntity dse = dimensionSlice.get();
         if (dse == null) return;
         // Inspired by EntityPlayerMP.onUpdate. Shame we can't just add chunks directly to target's chunkwatcher... but there'd be no wrapper for the packets.
-        ArrayList<Chunk> chunks = new ArrayList();
-        ArrayList<TileEntity> tileEntities = new ArrayList();
+        ArrayList<Chunk> chunks = new ArrayList<>();
+        ArrayList<TileEntity> tileEntities = new ArrayList<>();
         World world = DeltaChunk.getServerShadowWorld();
 
         Coord low = dse.getCorner();
@@ -253,7 +239,7 @@ public class PacketProxyingPlayer extends EntityPlayerMP implements
         //world.removeEntity(this); // setEntityDead
         world.playerEntities.remove(this);
         world.getPlayerManager().removePlayer(this); // No comod?
-        MinecraftServer.getServer().getConfigurationManager().playerEntityList.remove(playerNetServerHandler);
+        world.func_73046_m(/*getServer*/).getConfigurationManager().playerEntityList.remove(playerNetServerHandler.playerEntity);
         dimensionSlice.clear();
     }
 

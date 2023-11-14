@@ -31,7 +31,7 @@ public class DocReg {
      * The field's value must either be Iterable or a Map, or it must be an
      * object with a 'getRecipes' method returning Iterable or Map.
      */
-    public static void registerRecipeList(String machineName, Iterable recipeList) {
+    public static void registerRecipeList(String machineName, Iterable<?> recipeList) {
         customRecipes.put(machineName, recipeList);
     }
 
@@ -69,10 +69,10 @@ public class DocReg {
 
 
     // For internal use only.
-    public static final HashMap<String, IDocGenerator> generators = new HashMap<String, IDocGenerator>();
-    public static final ArrayList<String> indexed_domains = new ArrayList<String>();
-    public static final ArrayList<IManwich> manwiches = new ArrayList<IManwich>();
-    public static final TreeMap<String, Iterable> customRecipes = new TreeMap<String, Iterable>();
-    public static final HashMap<String, ITypesetCommand> commands = new HashMap<String, ITypesetCommand>();
-    public static final HashMap<String, String> doc_vars = new HashMap<String, String>();
+    public static final HashMap<String, IDocGenerator> generators = new HashMap<>();
+    public static final ArrayList<String> indexed_domains = new ArrayList<>();
+    public static final ArrayList<IManwich> manwiches = new ArrayList<>();
+    public static final TreeMap<String, Iterable<?>> customRecipes = new TreeMap<>();
+    public static final HashMap<String, ITypesetCommand> commands = new HashMap<>();
+    public static final HashMap<String, String> doc_vars = new HashMap<>();
 }

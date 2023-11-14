@@ -80,7 +80,7 @@ public class WrappedPacketFromServer extends WrappedPacket {
     }
 
     @Override
-    protected BiMap<Integer, Class> getPacketMap() {
+    protected BiMap<Integer, Class<? extends Packet>> getPacketMap() {
         return serverPacketMap;
     }
 

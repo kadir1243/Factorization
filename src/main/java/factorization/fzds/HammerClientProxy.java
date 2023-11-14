@@ -135,7 +135,7 @@ public class HammerClientProxy extends HammerProxy {
         send_queue = mc.thePlayer.sendQueue;
         WorldInfo wi = world.getWorldInfo();
         try {
-            HookTargetsClient.clientWorldLoadEventAbort.set(Boolean.TRUE);
+            HookTargetsClient.clientWorldLoadEventAbort.set(true);
             Hammer.worldClient = new HammerWorldClient(send_queue,
                     new WorldSettings(wi),
                     DeltaChunk.getDimensionId(),

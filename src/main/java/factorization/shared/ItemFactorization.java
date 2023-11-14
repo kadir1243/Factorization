@@ -4,7 +4,6 @@ import java.util.List;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
-import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -34,11 +33,11 @@ public class ItemFactorization extends Item {
     
     @Override
     @SideOnly(Side.CLIENT)
-    public final void addInformation(ItemStack is, EntityPlayer player, List list, boolean verbose) {
+    public final void addInformation(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {
         Core.brand(is, player, list, verbose);
     }
     
-    protected void addExtraInformation(ItemStack is, EntityPlayer player, List list, boolean verbose) {}
+    protected void addExtraInformation(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {}
     
     @Override
     @SideOnly(Side.CLIENT)

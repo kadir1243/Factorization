@@ -29,7 +29,6 @@ import factorization.darkiron.BlockDarkIronOre;
 import factorization.fzds.DeltaChunk;
 import factorization.fzds.HammerEnabled;
 import factorization.mechanics.ItemDarkIronChain;
-import factorization.oreprocessing.ItemOreProcessing;
 import factorization.oreprocessing.ItemOreProcessing.OreType;
 import factorization.oreprocessing.TileEntityCrystallizer;
 import factorization.oreprocessing.TileEntityGrinder;
@@ -80,10 +79,7 @@ import net.minecraftforge.oredict.ShapedOreRecipe;
 import net.minecraftforge.oredict.ShapelessOreRecipe;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Matcher;
 
 public class Registry {
@@ -132,7 +128,6 @@ public class Registry {
     public ItemChargeMeter charge_meter;
     public ItemBlockProxy mirror;
     public ItemBattery battery;
-    public ItemOreProcessing ore_dirty_gravel, ore_clean_gravel, ore_reduced, ore_crystal;
     public ItemCraftingComponent sludge;
     public ItemSculptingTool sculpt_tool;
     public ItemGlazeBucket glaze_bucket;
@@ -176,7 +171,7 @@ public class Registry {
 
     WorldgenManager worldgenManager;
 
-    public static HashMap<String, Item> nameCleanup = new HashMap<String, Item>();
+    public static HashMap<String, Item> nameCleanup = new HashMap<>();
 
     static void registerItem(Item item) {
         String find = Matcher.quoteReplacement("item.factorization:");
@@ -281,7 +276,7 @@ public class Registry {
     }
 
     void postMakeItems() {
-        HashSet<Item> foundItems = new HashSet<Item>();
+        Set<Item> foundItems = new HashSet<>();
         for (Field field : this.getClass().getFields()) {
             Object obj;
             try {
@@ -297,10 +292,9 @@ public class Registry {
                 foundItems.add((Item) obj);
             }
         }
-        
-        Block invalid = DataUtil.getBlock((Item) null);
+
         for (Item it : foundItems) {
-            if (DataUtil.getBlock(it) == invalid) {
+            if (DataUtil.getBlock(it) == Blocks.air) {
                 it.setTextureName(it.getUnlocalizedName());
                 registerItem(it);
             }
@@ -310,10 +304,12 @@ public class Registry {
     }
 
     public void makeItems() {
-        ore_dirty_gravel = new ItemOreProcessing("gravel");
-        ore_clean_gravel = new ItemOreProcessing("clean");
-        ore_reduced = new ItemOreProcessing("reduced");
-        ore_crystal = new ItemOreProcessing("crystal");
+        for (OreType value : OreType.values()) {
+            registerItem(value.getItem("gravel"));
+            registerItem(value.getItem("clean"));
+            registerItem(value.getItem("reduced"));
+            registerItem(value.getItem("crystal"));
+        }
         sludge = new ItemCraftingComponent("sludge");
         //ItemBlocks
         item_factorization = (ItemFactorizationBlock) Item.getItemFromBlock(factory_block);
@@ -496,7 +492,7 @@ public class Registry {
 
     void batteryRecipe(ItemStack res, Object... params) {
         for (int damage : new int[] { 1, 2 }) {
-            ArrayList<Object> items = new ArrayList<Object>(params.length);
+            ArrayList<Object> items = new ArrayList<>(params.length);
             for (Object p : params) {
                 if (p == battery) {
                     p = new ItemStack(battery, 1, damage);
@@ -642,7 +638,7 @@ public class Registry {
                     }
                     Item item = is.getItem();
                     if (ItemUtil.similar(Core.registry.greenware_item, is)) {
-                        if (match == null) match = new ArrayList<ItemStack>(2);
+                        if (match == null) match = new ArrayList<>(2);
                         match.add(is);
                     } else {
                         return null;
@@ -1431,11 +1427,11 @@ public class Registry {
             FMLInterModComms.sendRuntimeMessage(Core.instance, "NEIPlugins", "register-crafting-handler", Core.name + "@" + msg);
         }
         //Disables the Thaumcraft infernal furnace nugget bonus for crystalline metal
-        for (OreType ot : ItemOreProcessing.OreType.values()) {
+        for (OreType ot : OreType.values()) {
             if (!ot.enabled) {
                 continue;
             }
-            FMLInterModComms.sendMessage("Thaumcraft", "smeltBonusExclude", new ItemStack(ore_crystal, 1, ot.ID));
+            FMLInterModComms.sendMessage("Thaumcraft", "smeltBonusExclude", ot.getStack("crystal"));
         }
     }
     
@@ -1443,7 +1439,7 @@ public class Registry {
         leafBomb.addRecipes();
 
         barrelCart.setMaxStackSize(Items.chest_minecart.getItemStackLimit(new ItemStack(Items.chest_minecart))); // Duplicate changes Railcraft might make
-        ArrayList<ItemStack> theLogs = new ArrayList<ItemStack>();
+        ArrayList<ItemStack> theLogs = new ArrayList<>();
         for (ItemStack is : OreDictionary.getOres("logWood")) {
             Block log = Block.getBlockFromItem(is.getItem());
             if (log == null || log == Blocks.log || log == Blocks.log2) {
@@ -1453,7 +1449,7 @@ public class Registry {
                 theLogs.add(is);
                 continue;
             }
-            List<ItemStack> discovered_plank_types = new ArrayList<ItemStack>();
+            List<ItemStack> discovered_plank_types = new ArrayList<>();
             for (int md = 0; md < 16; md++) {
                 ItemStack ilog = new ItemStack(log, 1, md);
                 List<ItemStack> planks = FzUtil.copyWithoutNull(CraftUtil.craft1x1(null, true, ilog.copy()));

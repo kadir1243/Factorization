@@ -9,7 +9,7 @@ public interface IObjectWriter<T> {
      * You can register IObjectWriters here to adapt classes you have no control over, such as vanilla minecraft objects.
      * If your class implements IObjectWriter, then there's no need to register it..
      */
-    static InterfaceAdapter<Object, IObjectWriter> adapter = InterfaceAdapter.get(IObjectWriter.class);
+    InterfaceAdapter<Object, IObjectWriter> adapter = InterfaceAdapter.get(IObjectWriter.class);
 
     /**
      * @param out          A list of Words and Strings.
@@ -17,5 +17,5 @@ public interface IObjectWriter<T> {
      *                     then val.writeObject() is what is being called.
      * @param generic      A converter that can handles arbitrary objects, including ItemStacks and many other typical types.
      */
-    void writeObject(List out, T val, IObjectWriter<Object> generic);
+    void writeObject(List<Object> out, T val, IObjectWriter<Object> generic);
 }

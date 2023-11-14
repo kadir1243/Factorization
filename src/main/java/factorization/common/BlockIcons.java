@@ -132,11 +132,11 @@ public class BlockIcons {
     public static class ActivatingMachineIIcon extends IIconGroup {
         public IIcon top, bottom, side, side_on;
         public IIcon get(TileEntityFactorization tef, ForgeDirection dir) {
-            switch (dir) {
-            case UP: return top;
-            case DOWN: return bottom;
-            default: return tef.draw_active > 0 ? side_on : side;
-            }
+            return switch (dir) {
+                case UP -> top;
+                case DOWN -> bottom;
+                default -> tef.draw_active > 0 ? side_on : side;
+            };
         }
     }
     
@@ -144,11 +144,11 @@ public class BlockIcons {
         public IIcon face, side, top, bottom;
         
         public IIcon get(TileEntityFactorization tef, ForgeDirection dir) {
-            switch (dir) {
-            case UP: return top;
-            case DOWN: return bottom;
-            default: return tef.facing_direction == dir.ordinal() ? face : side;
-            }
+            return switch (dir) {
+                case UP -> top;
+                case DOWN -> bottom;
+                default -> tef.facing_direction == dir.ordinal() ? face : side;
+            };
         }
     }
     
@@ -256,10 +256,10 @@ public class BlockIcons {
                 if (arrow_direction == ForgeDirection.NORTH) return side_N;
                 if (arrow_direction == ForgeDirection.SOUTH) return side_S;
             }
-            if (face == ForgeDirection.WEST) {;
+            if (face == ForgeDirection.WEST) {
                 return arrow_direction.offsetZ == 1 ? side_E : side_W;
             }
-            if (face == ForgeDirection.EAST) {;
+            if (face == ForgeDirection.EAST) {
                 return arrow_direction.offsetZ == -1 ? side_E : side_W;
             }
             if (face == ForgeDirection.NORTH) {

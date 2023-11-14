@@ -129,8 +129,7 @@ public class DarkIronOreGenerator implements IWorldGenerator {
             rSq = r * r;
             rSqEnd = (r + 1) * (r + 1);
             blobSize = r * 2;
-            int d = r;
-            samples = noise.generateNoiseOctaves(samples, origin.x, origin.y, origin.z, blobSize, blobSize, blobSize, origin.x + d, origin.y + d, origin.z + d);
+            samples = noise.generateNoiseOctaves(samples, origin.x, origin.y, origin.z, blobSize, blobSize, blobSize, origin.x + r, origin.y + r, origin.z + r);
             corner = blobMin;
             Coord.iterateCube(blobMin, blobMax, paintMeteor);
         }
@@ -170,11 +169,11 @@ public class DarkIronOreGenerator implements IWorldGenerator {
             Coord.iterateCube(min, max, paintBlast);
             min.y = 0;
             min.adjust(-r / 3, 0, -r / 3);
-            max.adjust(+r / 3, 0, +r / 3);
+            max.adjust(r / 3, 0, r / 3);
             Coord.iterateCube(min, max, burnBlast);
         }
 
-        ICoordFunction paintBlast = new ICoordFunction() {
+        private final ICoordFunction paintBlast = new ICoordFunction() {
             @Override
             public void handle(Coord here) {
                 if (!here.inside(min, max)) return;
@@ -186,7 +185,7 @@ public class DarkIronOreGenerator implements IWorldGenerator {
             }
         };
 
-        ICoordFunction burnBlast = new ICoordFunction() {
+        private final ICoordFunction burnBlast = new ICoordFunction() {
             @Override
             public void handle(Coord here) {
                 if (!here.inside(min, max)) return;

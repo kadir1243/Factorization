@@ -5,10 +5,10 @@ import net.minecraft.command.CommandHelp;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import javax.annotation.Nonnull;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SafeCommandHelp extends CommandHelp {
 
@@ -23,28 +23,20 @@ public class SafeCommandHelp extends CommandHelp {
     }
 
     @Override
-    public List getCommandAliases() {
+    public List<String> getCommandAliases() {
         return null;
     }
 
     @Override
-    protected List getSortedPossibleCommands(ICommandSender player) {
-        List b = super.getSortedPossibleCommands(player);
-        ArrayList<SafetyWrap> ret = new ArrayList<SafetyWrap>(b.size());
-        for (Object c : b) {
-            ret.add(new SafetyWrap((ICommand) c));
-        }
-        return ret;
+    protected List<ICommand> getSortedPossibleCommands(ICommandSender player) {
+        List<ICommand> b = super.getSortedPossibleCommands(player);
+        return b.stream().map(SafetyWrap::new).collect(Collectors.toList());
     }
 
     @Override
-    protected Map getCommands() {
+    protected Map<String, ICommand> getCommands() {
         Map<String, ICommand> b = super.getCommands();
-        HashMap<String, SafetyWrap> ret = new HashMap<String, SafetyWrap>(b.size());
-        for (Map.Entry<String, ICommand> c : b.entrySet()) {
-            ret.put(c.getKey(), new SafetyWrap(c.getValue()));
-        }
-        return ret;
+        return b.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, c -> new SafetyWrap(c.getValue()), (a, b1) -> b1));
     }
 
     @Override
@@ -69,7 +61,7 @@ public class SafeCommandHelp extends CommandHelp {
         public String getCommandName() {
             try {
                 String name = base.getCommandName();
-                if (name == null || name.length() == 0) {
+                if (name == null || name.isEmpty()) {
                     return "<Unnamed command: " + base.getClass() + ">";
                 }
                 return base.getCommandName();
@@ -83,7 +75,7 @@ public class SafeCommandHelp extends CommandHelp {
         public String getCommandUsage(ICommandSender player) {
             try {
                 String usage = base.getCommandUsage(player);
-                if (usage == null || usage.length() == 0) {
+                if (usage == null || usage.isEmpty()) {
                     return "<Command with no usage:" + base.getClass() + ">";
                 }
                 return usage;
@@ -93,7 +85,7 @@ public class SafeCommandHelp extends CommandHelp {
         }
 
         @Override
-        public List getCommandAliases() {
+        public List<String> getCommandAliases() {
             return base.getCommandAliases();
         }
 
@@ -115,7 +107,7 @@ public class SafeCommandHelp extends CommandHelp {
         }
 
         @Override
-        public List addTabCompletionOptions(ICommandSender player, String[] args) {
+        public List<String> addTabCompletionOptions(ICommandSender player, String[] args) {
             try {
                 return base.addTabCompletionOptions(player, args);
             } catch (Throwable t) {
@@ -136,15 +128,13 @@ public class SafeCommandHelp extends CommandHelp {
         }
 
         @Override
-        public int compareTo(@SuppressWarnings("NullableProblems") Object obj) {
+        public int compareTo(@Nonnull Object obj) {
             try {
                 return base.getClass().getName().compareTo(obj.getClass().getName());
             } catch (Throwable t) {
                 final int a = System.identityHashCode(base);
                 final int b = System.identityHashCode(obj);
-                if (a == b) return 0;
-                if (a > b) return +1;
-                return -1;
+                return Integer.compare(a, b);
             }
         }
 

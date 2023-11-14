@@ -8,7 +8,6 @@ import java.util.*;
  * @param <SOURCE> The input type
  * @param <TARGET> The class that the type shall be cast to.
  */
-@SuppressWarnings("unused")
 public class InterfaceAdapter<SOURCE, TARGET> implements Comparator<Adapter>, Adapter<SOURCE, TARGET> {
     public final Class<TARGET> targetInterface;
 
@@ -19,7 +18,8 @@ public class InterfaceAdapter<SOURCE, TARGET> implements Comparator<Adapter>, Ad
      * @return a globally shared InterfaceAdapter associated with the interface.
      */
     public static <S, T> InterfaceAdapter<S, T> get(Class<T> targetInterface) {
-        InterfaceAdapter ret = common_adapters.get(targetInterface);
+        @SuppressWarnings("unchecked")
+        InterfaceAdapter<S, T> ret = common_adapters.get(targetInterface);
         if (ret == null) {
             ret = getExtra(targetInterface);
             common_adapters.put(targetInterface, ret);
@@ -27,7 +27,7 @@ public class InterfaceAdapter<SOURCE, TARGET> implements Comparator<Adapter>, Ad
         if (ret.targetInterface != targetInterface) {
             throw new ClassCastException("targetInterfaces don't match");
         }
-        return (InterfaceAdapter<S, T>) ret;
+        return ret;
     }
 
     /**
@@ -37,7 +37,7 @@ public class InterfaceAdapter<SOURCE, TARGET> implements Comparator<Adapter>, Ad
      * @return an anonymous adapter
      */
     public static <S, T> InterfaceAdapter<S, T> getExtra(Class<T> targetInterface) {
-        return new InterfaceAdapter<S, T>(targetInterface);
+        return new InterfaceAdapter<>(targetInterface);
     }
 
     /**
@@ -46,7 +46,7 @@ public class InterfaceAdapter<SOURCE, TARGET> implements Comparator<Adapter>, Ad
      * @param outInterface the value that will be returned by cast() if the input is of type inClass.
      */
     public <OBJ extends SOURCE> void register(Class<OBJ> inClass, TARGET outInterface) {
-        Adapter<OBJ, TARGET> ret = new GenericAdapter<OBJ, TARGET>(inClass, outInterface);
+        Adapter<OBJ, TARGET> ret = new GenericAdapter<>(inClass, outInterface);
         register(ret);
     }
 
@@ -117,7 +117,7 @@ public class InterfaceAdapter<SOURCE, TARGET> implements Comparator<Adapter>, Ad
 
     private <OBJ extends SOURCE> Adapter<OBJ, TARGET> findAdapter(Class<OBJ> objClass) {
         if (adapterCache.isEmpty()) {
-            Collections.sort(adapters, this);
+            adapters.sort(this);
         }
         if (targetInterface.isAssignableFrom(objClass)) {
             return (Adapter<OBJ, TARGET>) this; // the self adapter
@@ -130,13 +130,13 @@ public class InterfaceAdapter<SOURCE, TARGET> implements Comparator<Adapter>, Ad
         return (Adapter<OBJ, TARGET>) fallbackAdapter;
     }
 
-    private final HashMap<Class<? extends SOURCE>, Adapter<? extends SOURCE, TARGET>> adapterCache = new HashMap<Class<? extends SOURCE>, Adapter<? extends SOURCE, TARGET>>();
-    private final ArrayList<Adapter<? extends SOURCE, TARGET>> adapters = new ArrayList<Adapter<? extends SOURCE, TARGET>>();
+    private final HashMap<Class<? extends SOURCE>, Adapter<? extends SOURCE, TARGET>> adapterCache = new HashMap<>();
+    private final ArrayList<Adapter<? extends SOURCE, TARGET>> adapters = new ArrayList<>();
     private Adapter<SOURCE, TARGET> null_adapter = this;
     private Adapter<? extends SOURCE, TARGET> fallbackAdapter = (Adapter<? extends SOURCE, TARGET>) nullAdapter;
-    private static final HashMap<Class, InterfaceAdapter> common_adapters = new HashMap<Class, InterfaceAdapter>();
+    private static final HashMap<Class, InterfaceAdapter> common_adapters = new HashMap<>();
 
-    private static final Adapter<?, ?> nullAdapter = new GenericAdapter<Object, Object>(null /* rely on canCast() not being called */, null);
+    private static final Adapter<?, ?> nullAdapter = new GenericAdapter<>(null /* rely on canCast() not being called */, null);
 
     // Comparator implementation; fewer classes! :D
     @Override

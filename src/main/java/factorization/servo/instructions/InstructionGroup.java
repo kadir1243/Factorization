@@ -79,21 +79,19 @@ public class InstructionGroup extends Instruction {
     }
     
     @Override
-    public void addInformation(List info) {
+    public void addInformation(List<String> info) {
         if (stuff.getSize() <= 0) {
             info.add("Empty");
             return;
         }
-        Iterator<Object> it = stuff.iterator();
-        while (it.hasNext()) {
-            Object obj = it.next();
+        for (Object obj : stuff) {
             info.add(obj.toString());
         }
     }
     
     @Override
     public String getInfo() {
-        ArrayList<String> bits = new ArrayList();
+        List<String> bits = new ArrayList<>();
         addInformation(bits);
         return Joiner.on("\n").join(bits);
     }

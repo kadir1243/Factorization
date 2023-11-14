@@ -26,7 +26,7 @@ import java.util.List;
 public enum AabbDebugger {
     INSTANCE;
     
-    private AabbDebugger() {
+    AabbDebugger() {
         Core.loadBus(this);
         ClientCommandHandler.instance.registerCommand(new ICommand() {
             public int compareTo(ICommand other) {
@@ -49,27 +49,26 @@ public enum AabbDebugger {
             }
 
             @Override
-            public List getCommandAliases() {
+            public List<String> getCommandAliases() {
                 return null;
             }
 
             @Override
             public void processCommand(ICommandSender player, String[] args) {
                 String arg0 = args.length > 0 ? args[0] : "help";
-                if (arg0.equals("freeze")) {
-                    freeze = true;
-                } else if (arg0.equals("thaw")) {
-                    freeze = false;
-                } else if (arg0.equals("clean")) {
-                    frozen.clear();
-                    frozen_lines.clear();
-                } else {
-                    player.addChatMessage(new ChatComponentText(getCommandUsage(player)));
+                switch (arg0) {
+                    case "freeze" -> freeze = true;
+                    case "thaw" -> freeze = false;
+                    case "clean" -> {
+                        frozen.clear();
+                        frozen_lines.clear();
+                    }
+                    default -> player.addChatMessage(new ChatComponentText(getCommandUsage(player)));
                 }
             }
 
             @Override public boolean canCommandSenderUseCommand(ICommandSender p_71519_1_) { return true; }
-            @Override public List addTabCompletionOptions(ICommandSender p_71516_1_, String[] p_71516_2_) { return null; }
+            @Override public List<String> addTabCompletionOptions(ICommandSender p_71516_1_, String[] p_71516_2_) { return null; }
             @Override public boolean isUsernameIndex(String[] p_82358_1_, int p_82358_2_) { return false; }
             
         });
@@ -80,7 +79,7 @@ public enum AabbDebugger {
     }
 
     static <T> List<T> list() {
-        return Collections.synchronizedList(new ArrayList<T>());
+        return Collections.synchronizedList(new ArrayList<>());
     }
     
     static final List<AxisAlignedBB> boxes = list(), frozen = list();

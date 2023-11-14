@@ -12,12 +12,12 @@ import java.io.*;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ExportHtml implements ICommand {
     @Override
     public int compareTo(Object arg0) {
-        if (arg0 instanceof ICommand) {
-            ICommand other = (ICommand) arg0;
+        if (arg0 instanceof ICommand other) {
             return getCommandName().compareTo(other.getCommandName());
         }
         return 0;
@@ -34,7 +34,7 @@ public class ExportHtml implements ICommand {
     }
 
     @Override
-    public List getCommandAliases() { return null; }
+    public List<String> getCommandAliases() { return null; }
 
     @Override
     public boolean canCommandSenderUseCommand(ICommandSender icommandsender) {
@@ -42,7 +42,7 @@ public class ExportHtml implements ICommand {
     }
 
     @Override
-    public List addTabCompletionOptions(ICommandSender icommandsender, String[] astring) { return null; }
+    public List<String> addTabCompletionOptions(ICommandSender icommandsender, String[] astring) { return null; }
 
     @Override
     public boolean isUsernameIndex(String[] astring, int i) { return false; }
@@ -108,8 +108,8 @@ public class ExportHtml implements ICommand {
         }
     }
     
-    static HashSet<String> visited = new HashSet<String>();
-    static ArrayList<String> frontier = new ArrayList<String>();
+    static Set<String> visited = new HashSet<>();
+    static List<String> frontier = new ArrayList<>();
 
     public static void visitLink(String newLink) {
         if (visited.contains(newLink)) {

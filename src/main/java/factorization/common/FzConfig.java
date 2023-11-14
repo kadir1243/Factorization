@@ -1,6 +1,5 @@
 package factorization.common;
 
-import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.registry.EntityRegistry;
 import factorization.fzds.DeltaChunk;
@@ -82,8 +81,8 @@ public class FzConfig {
     public static boolean sort_renderers = !Loader.isModLoaded("optifine"); // Just as a guess.
     public static boolean enableRecipeReflection = true;
 
-    public ArrayList<Property> editable_main = new ArrayList<Property>();
-    public ArrayList<Property> editable_runtime = new ArrayList<Property>();
+    public ArrayList<Property> editable_main = new ArrayList<>();
+    public ArrayList<Property> editable_runtime = new ArrayList<>();
 
     private boolean can_edit_main = false, can_edit_runtime = false;
 

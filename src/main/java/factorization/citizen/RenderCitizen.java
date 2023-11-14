@@ -10,15 +10,11 @@ import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityLiving;
 import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.monster.EntityEnderman;
 import net.minecraft.util.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 
 public class RenderCitizen extends RenderEntity {
-    private EntityLiving dummy_entity = new EntityEnderman(null);
-
     @Override
     public void doRender(Entity ent, double x, double y, double z, float yaw, float partial) {
         EntityCitizen citizen = (EntityCitizen) ent;

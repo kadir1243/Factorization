@@ -1,26 +1,26 @@
 package factorization.oreprocessing;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.oredict.OreDictionary;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.relauncher.Side;
 import factorization.api.IActOnCraft;
 import factorization.shared.Core;
 import factorization.shared.Core.TabType;
 import factorization.shared.ItemFactorization;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
+import net.minecraft.inventory.IInventory;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.oredict.OreDictionary;
+
+import java.util.*;
 
 public class ItemOreProcessing extends ItemFactorization implements IActOnCraft {
-    public static ArrayList<String> OD_ores = new ArrayList(), OD_ingots = new ArrayList();
-    public static enum OreType {
+    public static List<String> OD_ores = new ArrayList<>();
+    public static List<String> OD_ingots = new ArrayList<>();
+    private final OreType type;
+
+    public enum OreType {
         IRON(0, 0xD8D8D8, "Iron", "oreIron", "ingotIron"),
         GOLD(1, 0xEEEB28, "Gold", "oreGold", "ingotGold"),
         LEAD(2, 0x2F2C3C, "Lead", "oreLead", "ingotLead"),
@@ -28,25 +28,24 @@ public class ItemOreProcessing extends ItemFactorization implements IActOnCraft 
         COPPER(4, 0xD68C39, "Copper", "oreCopper", "ingotCopper"),
         SILVER(5, 0x7B96B9, "Silver", null, "ingotSilver"),
         GALENA(6, 0x687B99, "Galena", "oreSilver", null),
-        //no more aluminum. Bye-bye, aluminum.
         COBALT(8, 0x2376DD, "Cobalt", "oreCobalt", "ingotCobalt"),
         ARDITE(9, 0xF48A00, "Ardite", "oreArdite", "ingotArdite"),
-        DARKIRON(10, 0x5000D4, "Dark Iron", "oreFzDarkIron", "ingotFzDarkIron"),
-        INVALID(0, 0xFFFFFF, "Invalid", null, null);
-        ;
+        DARKIRON(10, 0x5000D4, "Dark Iron", "oreFzDarkIron", "ingotFzDarkIron");
+
         static {
             COBALT.surounding_medium = new ItemStack(Blocks.netherrack);
             ARDITE.surounding_medium = new ItemStack(Blocks.netherrack);
         }
         
-        public int ID;
-        int color;
-        String en_name;
-        String OD_ore, OD_ingot;
+        private final int ID;
+        final int color;
+        final String en_name;
+        final String OD_ore;
+        final String OD_ingot;
         public boolean enabled = false;
         ItemStack processingResult = null;
         ItemStack surounding_medium = new ItemStack(Blocks.stone);
-        private OreType(int ID, int color, String en_name, String OD_ore, String OD_ingot) {
+        OreType(int ID, int color, String en_name, String OD_ore, String OD_ingot) {
             this.ID = ID;
             this.color = color;
             this.en_name = en_name;
@@ -62,10 +61,10 @@ public class ItemOreProcessing extends ItemFactorization implements IActOnCraft 
         
         public void enable() {
             if (!this.enabled) {
-                ItemStack dirty = Core.registry.ore_dirty_gravel.makeStack(this);
-                ItemStack clean = Core.registry.ore_clean_gravel.makeStack(this);
-                ItemStack reduced = Core.registry.ore_reduced.makeStack(this);
-                ItemStack crystal = Core.registry.ore_crystal.makeStack(this);
+                ItemStack dirty = this.getStack("gravel");
+                ItemStack clean = this.getStack("clean");
+                ItemStack reduced = this.getStack("reduced");
+                ItemStack crystal = this.getStack("crystal");
                 OreDictionary.registerOre("dirtyGravel" + this.en_name, dirty);
                 OreDictionary.registerOre("cleanGravel" + this.en_name, clean);
                 OreDictionary.registerOre("reduced" + this.en_name, reduced);
@@ -85,75 +84,56 @@ public class ItemOreProcessing extends ItemFactorization implements IActOnCraft 
             }
             return null;
         }
-        
-        static OreType[] vals = null;
+
+        private static final OreType[] VALUES = new OreType[] {IRON, GOLD, LEAD, TIN, COPPER, SILVER, GALENA, null, COBALT, ARDITE, DARKIRON};
+
         public static OreType fromID(int id) {
-            if (vals == null) {
-                int max = 0;
-                for (OreType ot : OreType.values()) {
-                    max = Math.max(max, ot.ID);
-                }
-                vals = new OreType[max + 1];
-                Arrays.fill(vals, INVALID);
-                for (OreType ot : OreType.values()) {
-                    if (ot == INVALID) continue;
-                    vals[ot.ID] = ot;
-                }
+            if (id < 0 || id >= VALUES.length) {
+                return null;
             }
-            if (id < 0 || id >= vals.length) {
-                return INVALID;
-            }
-            return vals[id];
+            return VALUES[id];
         }
-        
-        public static OreType fromIS(ItemStack is) {
-            if (is == null) {
-                return INVALID;
-            }
-            return fromID(is.getItemDamage());
+
+        @Override
+        public String toString() {
+            return super.toString().toLowerCase(Locale.ROOT);
+        }
+
+        private final Map<String, Item> items = new HashMap<>();
+
+        public Item getItem(String stateName) {
+            return items.computeIfAbsent(stateName, s -> new ItemOreProcessing(s, this));
+        }
+
+        public ItemStack getStack(String stateName) {
+            return new ItemStack(getItem(stateName));
         }
     }
-    
-    String stateName;
 
-    public ItemOreProcessing(String stateName) {
+    private final String stateName;
+
+    public ItemOreProcessing(String stateName, OreType type) {
         super("ore/" + stateName, TabType.MATERIALS);
-        setHasSubtypes(true);
         this.stateName = stateName;
+        this.type = type;
+        if (type != OreType.GALENA &&
+                type != OreType.SILVER &&
+                !(stateName.equals("crystal") ||
+                        stateName.equals("reduced") ||
+                        stateName.equals("gravel") ||
+                        stateName.equals("clean"))) {
+            setCreativeTab(Core.tabFactorization);
+        }
     }
 
     @Override
     public int getColorFromItemStack(ItemStack is, int renderPass) {
-        return OreType.fromIS(is).color;
+        return this.type.color;
     }
     
     @Override
-    public String getUnlocalizedName(ItemStack is) {
-        return "item.factorization:ore/" + stateName + "/" + OreType.fromIS(is);
-    }
-
-    @Override
-    public void getSubItems(Item id, CreativeTabs tab, List list) {
-        for (OreType oreType : OreType.values()) {
-            if (oreType.enabled) {
-                boolean show = true;
-                if ((this == Core.registry.ore_crystal || this == Core.registry.ore_reduced) && oreType == OreType.GALENA) {
-                    show = false;
-                }
-                if (this == Core.registry.ore_dirty_gravel || this == Core.registry.ore_clean_gravel) {
-                    if (oreType == OreType.SILVER) {
-                        show = false;
-                    }
-                }
-                if (show) {
-                    list.add(new ItemStack(this, 1, oreType.ID));
-                }
-            }
-        }
-    }
-    
-    public ItemStack makeStack(OreType ot) {
-        return new ItemStack(this, 1, ot.ID);
+    public String getUnlocalizedName() {
+        return "item.factorization:ore/" + stateName + "/" + this.type.toString();
     }
 
     @Override
@@ -168,20 +148,20 @@ public class ItemOreProcessing extends ItemFactorization implements IActOnCraft 
         } else if (player.worldObj.isRemote) {
             return;
         }
-        if (result.getItem() != Core.registry.ore_clean_gravel) {
-            return;
+        for (OreType value : OreType.values()) {
+            if (result.getItem() != value.getItem("clean")) {
+                return;
+            }
+            if (is.getItem() != value.getItem("gravel")) {
+                return;
+            }
         }
-        if (is.getItem() != Core.registry.ore_dirty_gravel) {
-            return;
-        }
-        boolean any = false;
         if (Math.random() > 0.25) {
             return;
         }
-        any = true;
         ItemStack toAdd = new ItemStack(Core.registry.sludge);
         if (!player.inventory.addItemStackToInventory(toAdd)) {
-            player.dropPlayerItemWithRandomChoice(new ItemStack(Core.registry.sludge, 1), false);
+            player.dropPlayerItemWithRandomChoice(new ItemStack(Core.registry.sludge), false);
         }
     }
 }

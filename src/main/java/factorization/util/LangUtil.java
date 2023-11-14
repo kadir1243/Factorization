@@ -10,7 +10,7 @@ import net.minecraft.util.StatCollector;
 public class LangUtil {
     public static String getProperKey(ItemStack is) {
         String n = is.getUnlocalizedName();
-        if (n == null || n.length() == 0) {
+        if (n == null || n.isEmpty()) {
             n = "???";
         }
         return n;
@@ -23,7 +23,7 @@ public class LangUtil {
         }
         try {
             String s = is.getDisplayName();
-            if (s != null && s.length() > 0) {
+            if (s != null && !s.isEmpty()) {
                 return s;
             }
         } catch (Exception e) {
@@ -41,7 +41,7 @@ public class LangUtil {
 
     static boolean canTranslate(String str) {
         String ret = StatCollector.translateToLocal(str);
-        if (ret == null || ret.length() == 0) {
+        if (ret == null || ret.isEmpty()) {
             return false;
         }
         return !ret.equals(str);
@@ -55,11 +55,11 @@ public class LangUtil {
     }
 
     public static String translate(String key) {
-        return ("" + StatCollector.translateToLocal(key + ".name")).trim();
+        return StatCollector.translateToLocal(key + ".name").trim();
     }
 
     public static String translateThis(String key) {
-        return ("" + StatCollector.translateToLocal(key)).trim();
+        return StatCollector.translateToLocal(key).trim();
     }
 
     public static String translateExact(String key) {
@@ -71,7 +71,7 @@ public class LangUtil {
             }
             String unit = bits[1];
             int maxParts = Integer.parseInt(bits[2]);
-            Long val = Long.parseLong(bits[3]);
+            long val = Long.parseLong(bits[3]);
             return FzUtil.unitify(unit, val, maxParts);
         }
         String ret = StatCollector.translateToLocal(key);

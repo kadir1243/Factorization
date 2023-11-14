@@ -22,7 +22,6 @@ import factorization.api.Coord;
 import factorization.api.Quaternion;
 import factorization.ceramics.TileEntityGreenware.ClayLump;
 import factorization.ceramics.TileEntityGreenware.ClayState;
-import factorization.common.FactoryType;
 import factorization.common.ItemIcons;
 import factorization.notify.Notice;
 import factorization.shared.Core.TabType;
@@ -122,7 +121,7 @@ public class ItemSculptingTool extends ItemFactorization {
     }
     
     @Override
-    public void addExtraInformation(ItemStack is, EntityPlayer player, List list, boolean verbose) {
+    public void addExtraInformation(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {
         ToolMode mode = getMode(is.getItemDamage());
         String pre = "item.factorization:sculptTool.";
         list.add(StatCollector.translateToLocal(pre + mode));

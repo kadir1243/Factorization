@@ -1,4 +1,4 @@
-package factorization.compat.ic2;
+package factorization.compat;
 
 import factorization.api.IRotationalEnergySource;
 import factorization.api.adapter.Adapter;

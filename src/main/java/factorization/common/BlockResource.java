@@ -1,18 +1,16 @@
 package factorization.common;
 
-import java.util.List;
-
+import factorization.shared.Core;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.IIcon;
 import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
-import factorization.api.Coord;
-import factorization.shared.Core;
+
+import java.util.List;
 
 public class BlockResource extends Block {
     public IIcon[] icons = new IIcon[ResourceType.values().length];
@@ -42,7 +40,7 @@ public class BlockResource extends Block {
         return BlockIcons.error;
     }
     
-    public void addCreativeItems(List itemList) {
+    public void addCreativeItems(List<ItemStack> itemList) {
         itemList.add(Core.registry.silver_ore_item);
         itemList.add(Core.registry.silver_block_item);
         itemList.add(Core.registry.lead_block_item);
@@ -50,8 +48,8 @@ public class BlockResource extends Block {
     }
     
     @Override
-    public void getSubBlocks(Item par1, CreativeTabs par2CreativeTabs, List itemList) {
-        addCreativeItems((List) itemList);
+    public void getSubBlocks(Item par1, CreativeTabs par2CreativeTabs, List<ItemStack> itemList) {
+        addCreativeItems(itemList);
     }
 
     @Override

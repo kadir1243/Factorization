@@ -240,7 +240,7 @@ public class TileEntityGreenware extends TileEntityCommon implements IFurnaceHea
 
     }
 
-    public ArrayList<ClayLump> parts = new ArrayList();
+    public ArrayList<ClayLump> parts = new ArrayList<>();
     public int lastTouched = 0;
     public int totalHeat = 0;
     boolean glazesApplied = false;
@@ -680,7 +680,7 @@ public class TileEntityGreenware extends TileEntityCommon implements IFurnaceHea
     }
 
     private void shareLump(int id, ClayLump selection) {
-        ArrayList<Object> toSend = new ArrayList();
+        ArrayList<Object> toSend = new ArrayList<>();
         toSend.add(id);
         selection.write(toSend);
         broadcastMessage(null, MessageType.SculptMove, toSend.toArray());
@@ -708,7 +708,7 @@ public class TileEntityGreenware extends TileEntityCommon implements IFurnaceHea
             front = ForgeDirection.getOrientation(input.readByte());
             setRotation(input.readByte());
             parts.clear();
-            ArrayList<Object> args = new ArrayList();
+            ArrayList<Object> args = new ArrayList<>();
             while (true) {
                 try {
                     parts.add(new ClayLump().read(input));

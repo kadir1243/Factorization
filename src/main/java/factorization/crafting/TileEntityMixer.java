@@ -44,18 +44,18 @@ public class TileEntityMixer extends TileEntityFactorization implements
     public static final int INPUT_SIZE = 4;
     public ItemStack input[] = new ItemStack[INPUT_SIZE], output[] = new ItemStack[4];
     public static final int[] IN_s = {0, 1, 2, 3}, OUT_s = {4, 5, 6, 7};
-    public ArrayList<ItemStack> outputBuffer = new ArrayList();
+    public ArrayList<ItemStack> outputBuffer = new ArrayList<>();
     public int progress = 0;
     public int speed = 0;
     Charge charge = new Charge(this);
     
     @Override
     public IIcon getIcon(ForgeDirection dir) {
-        switch (dir) {
-        case UP: return BlockIcons.mixer.top;
-        case DOWN: return BlockIcons.mixer.bottom;
-        default: return BlockIcons.mixer.side;
-        }
+        return switch (dir) {
+            case UP -> BlockIcons.mixer.top;
+            case DOWN -> BlockIcons.mixer.bottom;
+            default -> BlockIcons.mixer.side;
+        };
     }
 
     @Override
@@ -187,11 +187,6 @@ public class TileEntityMixer extends TileEntityFactorization implements
         return false;
     }
 
-    @Override
-    protected int getLogicSpeed() {
-        return 4;
-    }
-
     int getRemainingProgress() {
         return 250 - progress;
     }
@@ -207,19 +202,17 @@ public class TileEntityMixer extends TileEntityFactorization implements
     public static final CraftingManagerGeneric<TileEntityMixer> recipes = CraftingManagerGeneric.get(TileEntityMixer.class);
 
     public static class RecipeMatchInfo implements IVexatiousCrafting<TileEntityMixer> {
-        public ArrayList inputs = new ArrayList();
+        public ArrayList<Object> inputs = new ArrayList<>();
         public ItemStack output;
         public IRecipe theRecipe;
         public int size = 0;
 
         public void add(Object o) {
-            if (o instanceof ItemStack) {
-                ItemStack it = (ItemStack) o;
-                o = it = it.copy();
+            if (o instanceof ItemStack it) {
+                it = it.copy();
                 int s = Math.min(1, it.stackSize);
                 it.stackSize = s;
-                for (int i = 0; i < inputs.size(); i++) {
-                    Object h = inputs.get(i);
+                for (Object h : inputs) {
                     if (h instanceof ItemStack) {
                         ItemStack here = (ItemStack) h;
                         if (ItemUtil.couldMerge(here, it)) {
@@ -245,7 +238,7 @@ public class TileEntityMixer extends TileEntityFactorization implements
                     if (((Collection) o).size() == 0) {
                         throw new WeirdRecipeException();
                     }
-                    ArrayList<ItemStack> parts = new ArrayList();
+                    List<ItemStack> parts = new ArrayList<>();
                     for (Object p : (Collection)o) {
                         if (p instanceof ItemStack) {
                             parts.add((ItemStack) p);
@@ -396,7 +389,8 @@ public class TileEntityMixer extends TileEntityFactorization implements
             ItemStack output = null;
             if (recipe instanceof ShapelessRecipes) {
                 ShapelessRecipes sr = (ShapelessRecipes) recipe;
-                inputList = sr.recipeItems;
+                //noinspection unchecked,rawtypes
+                inputList = (List<Object>) ((List)sr.recipeItems);
                 output = sr.getRecipeOutput();
             }
             if (recipe instanceof ShapelessOreRecipe) {
@@ -444,12 +438,8 @@ public class TileEntityMixer extends TileEntityFactorization implements
                 // Ignored...
             }
         }
-        Collections.sort(found, new Comparator<RecipeMatchInfo>() {
-            @SuppressWarnings("SubtractionInCompareTo")
-            @Override
-            public int compare(RecipeMatchInfo o1, RecipeMatchInfo o2) {
-                return o2.size - o1.size; // The size is tiny.
-            }
+        found.sort((o1, o2) -> {
+            return o2.size - o1.size; // The size is tiny.
         });
         for (RecipeMatchInfo rmi : found) {
             recipes.add(rmi);

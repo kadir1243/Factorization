@@ -1,24 +1,23 @@
 package factorization.colossi;
 
-import java.util.ArrayList;
-
+import factorization.api.Coord;
+import factorization.api.DeltaCoord;
 import factorization.common.FzConfig;
+import factorization.notify.Notice;
+import factorization.shared.Core;
+import factorization.shared.Core.TabType;
+import factorization.shared.ItemFactorization;
 import factorization.util.PlayerUtil;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.ChatComponentTranslation;
 import net.minecraft.util.IChatComponent;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.FakePlayer;
 import net.minecraftforge.common.util.ForgeDirection;
-import factorization.api.Coord;
-import factorization.api.DeltaCoord;
-import factorization.notify.Notice;
-import factorization.shared.Core;
-import factorization.shared.Core.TabType;
-import factorization.shared.ItemFactorization;
+
+import java.util.List;
 
 public class ItemColossusGuide extends ItemFactorization {
 
@@ -41,11 +40,11 @@ public class ItemColossusGuide extends ItemFactorization {
         }
         
         int range = WorldGenColossus.GENERATION_SPACING * 3 / 2;
-        if (MinecraftServer.getServer().getCurrentPlayerCount() == 1) {
+        if (world.playerEntities.size() == 1) {
             range = WorldGenColossus.GENERATION_SPACING * 5 / 2;
         }
         Coord playerPos = new Coord(player);
-        ArrayList<Coord> nearby;
+        List<Coord> nearby;
         try {
             nearby = WorldGenColossus.getCandidatesNear(playerPos, range, true);
         } catch (WorldGenColossus.LocationException e) {

@@ -1,24 +1,51 @@
 package factorization.common;
 
+import cpw.mods.fml.client.registry.ClientRegistry;
+import cpw.mods.fml.client.registry.RenderingRegistry;
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.relauncher.Side;
 import factorization.api.Coord;
 import factorization.artifact.ContainerForge;
 import factorization.artifact.GuiArtifactForge;
 import factorization.artifact.RenderBrokenArtifact;
 import factorization.beauty.*;
+import factorization.ceramics.BlockRenderGreenware;
+import factorization.ceramics.ItemRenderGlazeBucket;
+import factorization.ceramics.TileEntityGreenware;
+import factorization.ceramics.TileEntityGreenwareRender;
 import factorization.charge.*;
 import factorization.citizen.EntityCitizen;
 import factorization.citizen.RenderCitizen;
+import factorization.colossi.ColossusController;
+import factorization.colossi.ColossusControllerRenderer;
+import factorization.crafting.*;
+import factorization.darkiron.BlockDarkIronOre;
+import factorization.darkiron.GlintRenderer;
 import factorization.mechanics.BlockRenderHinge;
 import factorization.mechanics.SocketPoweredCrank;
 import factorization.mechanics.TileEntityHinge;
 import factorization.mechanics.TileEntityHingeRenderer;
+import factorization.oreprocessing.*;
+import factorization.redstone.GuiParasieve;
 import factorization.rendersorting.RenderSorter;
+import factorization.servo.BlockRenderServoRail;
+import factorization.servo.RenderServoMotor;
+import factorization.servo.ServoMotor;
 import factorization.servo.stepper.RenderStepperEngine;
 import factorization.servo.stepper.StepperEngine;
 import factorization.shared.*;
+import factorization.sockets.BlockRenderSocketBase;
+import factorization.sockets.SocketLacerator;
+import factorization.sockets.SocketScissors;
+import factorization.sockets.TileEntitySocketRenderer;
+import factorization.sockets.fanturpeller.SocketFanturpeller;
+import factorization.twistedblock.TwistedRender;
+import factorization.utiligoo.GooRenderer;
 import factorization.weird.*;
 import factorization.weird.poster.EntityPoster;
 import factorization.weird.poster.RenderPoster;
+import factorization.wrath.BlockRenderLamp;
+import factorization.wrath.TileEntityWrathLamp;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.audio.ISound;
 import net.minecraft.client.audio.PositionedSoundRecord;
@@ -36,48 +63,6 @@ import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.world.World;
 import net.minecraftforge.client.MinecraftForgeClient;
-import cpw.mods.fml.client.registry.ClientRegistry;
-import cpw.mods.fml.client.registry.RenderingRegistry;
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.relauncher.Side;
-import factorization.ceramics.BlockRenderGreenware;
-import factorization.ceramics.ItemRenderGlazeBucket;
-import factorization.ceramics.TileEntityGreenware;
-import factorization.ceramics.TileEntityGreenwareRender;
-import factorization.colossi.ColossusController;
-import factorization.colossi.ColossusControllerRenderer;
-import factorization.crafting.BlockRenderCompressionCrafter;
-import factorization.crafting.BlockRenderMixer;
-import factorization.crafting.ContainerMixer;
-import factorization.crafting.GuiMixer;
-import factorization.crafting.GuiStamper;
-import factorization.crafting.TileEntityCompressionCrafter;
-import factorization.crafting.TileEntityCompressionCrafterRenderer;
-import factorization.crafting.TileEntityMixer;
-import factorization.crafting.TileEntityMixerRenderer;
-import factorization.darkiron.BlockDarkIronOre;
-import factorization.darkiron.GlintRenderer;
-import factorization.oreprocessing.BlockRenderCrystallizer;
-import factorization.oreprocessing.ContainerCrystallizer;
-import factorization.oreprocessing.ContainerSlagFurnace;
-import factorization.oreprocessing.GuiCrystallizer;
-import factorization.oreprocessing.GuiSlag;
-import factorization.oreprocessing.TileEntityCrystallizer;
-import factorization.oreprocessing.TileEntityCrystallizerRender;
-import factorization.oreprocessing.TileEntityGrinderRender;
-import factorization.servo.BlockRenderServoRail;
-import factorization.redstone.GuiParasieve;
-import factorization.servo.RenderServoMotor;
-import factorization.servo.ServoMotor;
-import factorization.sockets.BlockRenderSocketBase;
-import factorization.sockets.SocketLacerator;
-import factorization.sockets.SocketScissors;
-import factorization.sockets.TileEntitySocketRenderer;
-import factorization.sockets.fanturpeller.SocketFanturpeller;
-import factorization.twistedblock.TwistedRender;
-import factorization.utiligoo.GooRenderer;
-import factorization.wrath.BlockRenderLamp;
-import factorization.wrath.TileEntityWrathLamp;
 
 public class FactorizationClientProxy extends FactorizationProxy {
     public FactorizationKeyHandler keyHandler = new FactorizationKeyHandler();
@@ -113,10 +98,9 @@ public class FactorizationClientProxy extends FactorizationProxy {
         }
         
         TileEntity te = world.getTileEntity(x, y, z);
-        if (!(te instanceof TileEntityFactorization)) {
+        if (!(te instanceof TileEntityFactorization fac)) {
             return null;
         }
-        TileEntityFactorization fac = (TileEntityFactorization) te;
         ContainerFactorization cont;
         if (ID == FactoryType.SLAGFURNACE.gui) {
             cont = new ContainerSlagFurnace(player, fac);
@@ -152,8 +136,7 @@ public class FactorizationClientProxy extends FactorizationProxy {
     public void pokePocketCrafting() {
         // If the player has a pocket crafting table open, have it update
         Minecraft minecraft = Minecraft.getMinecraft();
-        if (minecraft.currentScreen instanceof GuiPocketTable) {
-            GuiPocketTable gui = (GuiPocketTable) minecraft.currentScreen;
+        if (minecraft.currentScreen instanceof GuiPocketTable gui) {
             gui.containerPocket.updateCraft();
         }
     }
@@ -173,7 +156,7 @@ public class FactorizationClientProxy extends FactorizationProxy {
 
 
 
-    private void setTileEntityRendererDispatcher(Class clazz, TileEntitySpecialRenderer r) {
+    private void setTileEntityRendererDispatcher(Class<? extends TileEntity> clazz, TileEntitySpecialRenderer r) {
         ClientRegistry.bindTileEntitySpecialRenderer(clazz, r);
     }
 
@@ -302,11 +285,9 @@ public class FactorizationClientProxy extends FactorizationProxy {
         if (FMLCommonHandler.instance().getEffectiveSide() != Side.CLIENT) {
             return false;
         }
-        Minecraft mc = Minecraft.getMinecraft();
-        return org.lwjgl.input.Keyboard.isKeyDown(42 /* sneak */);
-        //return !mc.gameSettings.keyBindSneak.pressed;
+        return Minecraft.getMinecraft().gameSettings.keyBindSneak.getIsKeyPressed();
     }
-    
+
     @Override
     public void afterLoad() {
         Core.logInfo("Reloading game settings");

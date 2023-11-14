@@ -139,9 +139,9 @@ public enum FactoryType {
                 }
             }
             try {
-                representative = ((Class<? extends TileEntityCommon>)clazz).newInstance();
+                representative = clazz.getConstructor().newInstance();
             } catch (Throwable e) {
-                throw new IllegalArgumentException("Can not instantiate: " + toString(), e);
+                throw new IllegalArgumentException("Can not instantiate: " + this, e);
             }
             representative.representYoSelf();
         }
@@ -152,10 +152,10 @@ public enum FactoryType {
 
     static class mapper {
         //bluh java
-        static FactoryType mapping[] = new FactoryType[128];
+        static FactoryType[] mapping = new FactoryType[128];
     }
 
-    FactoryType(int metadata, boolean use_gui, int gui_id, Class clazz, String name) {
+    FactoryType(int metadata, boolean use_gui, int gui_id, Class<? extends TileEntityCommon> clazz, String name) {
         md = metadata;
         if (use_gui) {
             gui = gui_id;
@@ -167,11 +167,10 @@ public enum FactoryType {
         mapper.mapping[md] = this;
         this.clazz = clazz;
         this.te_id = name;
-        TileEntityCommon rep = null;
-        representative = rep;
+        representative = null;
     }
 
-    FactoryType(int md, boolean use_gui, Class clazz, String name) {
+    FactoryType(int md, boolean use_gui, Class<? extends TileEntityCommon> clazz, String name) {
         this(md, use_gui, md, clazz, name);
     }
 
@@ -189,11 +188,9 @@ public enum FactoryType {
             return null;
         }
         try {
-            return (TileEntityCommon) clazz.newInstance();
-        } catch (InstantiationException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
+            return clazz.getConstructor().newInstance();
+        } catch (Exception e) {
+            Core.logSevere("Can not make tile entity", e);
         }
         return null;
     }
@@ -223,8 +220,7 @@ public enum FactoryType {
         if (disabled) {
             return null;
         }
-        ItemStack ret = new ItemStack(Core.registry.item_factorization, 1, this.md);
-        return ret;
+        return new ItemStack(Core.registry.item_factorization, 1, this.md);
     }
 
     public static void registerTileEntities() {

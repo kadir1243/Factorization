@@ -11,8 +11,6 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.embedded.EmbeddedChannel;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.enchantment.EnchantmentHelper;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -32,7 +30,6 @@ import net.minecraft.util.Vec3;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.util.FakePlayer;
-import net.minecraftforge.common.util.ForgeDirection;
 import net.minecraftforge.event.world.WorldEvent;
 
 import java.util.Arrays;
@@ -42,14 +39,10 @@ import java.util.WeakHashMap;
 
 public final class PlayerUtil {
     private static final UUID FZ_UUID = UUID.fromString("f979c78a-f80d-46b1-9c49-0121ea8850e6");
-    private static HashMap<String, WeakHashMap<World, FzFakePlayer>> usedPlayerCache = new HashMap();
+    private static HashMap<String, WeakHashMap<World, FzFakePlayer>> usedPlayerCache = new HashMap<>();
 
     public static EntityPlayer makePlayer(final Coord where, String use) {
-        WeakHashMap<World, FzFakePlayer> fakePlayerCache = usedPlayerCache.get(use);
-        if (fakePlayerCache == null) {
-            fakePlayerCache = new WeakHashMap<World, FzFakePlayer>();
-            usedPlayerCache.put(use, fakePlayerCache);
-        }
+        WeakHashMap<World, FzFakePlayer> fakePlayerCache = usedPlayerCache.computeIfAbsent(use, k -> new WeakHashMap<>());
         FzFakePlayer found = fakePlayerCache.get(where.w);
         if (found == null) {
             if (where.w instanceof WorldServer) {
@@ -115,11 +108,11 @@ public final class PlayerUtil {
         return server.getConfigurationManager().func_152596_g(player.getGameProfile());
     }
 
-    public static boolean isCommandSenderOpped(ICommandSender player) {
-        if (player instanceof EntityPlayer) {
-            return isPlayerOpped((EntityPlayer) player);
+    public static boolean isCommandSenderOpped(ICommandSender sender) {
+        if (sender instanceof EntityPlayer) {
+            return isPlayerOpped((EntityPlayer) sender);
         }
-        return player instanceof MinecraftServer || player instanceof RConConsoleSource;
+        return sender instanceof MinecraftServer || sender instanceof RConConsoleSource;
     }
 
     public static boolean isPlayerCreative(EntityPlayer player) {
@@ -178,7 +171,7 @@ public final class PlayerUtil {
 
     private static class FakeNetHandler extends NetHandlerPlayServer {
         public FakeNetHandler(EntityPlayerMP player) {
-            super(MinecraftServer.getServer(), new FakeNetManager(), player);
+            super(player.mcServer, new FakeNetManager(), player);
         }
 
         @Override public void sendPacket(Packet ignored) { }

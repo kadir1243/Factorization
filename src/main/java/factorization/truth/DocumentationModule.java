@@ -1,6 +1,5 @@
 package factorization.truth;
 
-import com.google.common.io.Closeables;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.Mod;
@@ -47,6 +46,8 @@ import org.lwjgl.input.Mouse;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -125,13 +126,13 @@ public class DocumentationModule implements factorization.truth.api.IDocModule {
         reg("for", new CmdFor());
     }
 
-    static HashMap<String, ArrayList<ItemStack>> nameCache = null;
+    private static Map<String, List<ItemStack>> nameCache = null;
 
-    public static ArrayList<ItemStack> lookup(String name) {
+    public static List<ItemStack> lookup(String name) {
         return getNameItemCache().get(name);
     }
 
-    public static HashMap<String, ArrayList<ItemStack>> getNameItemCache() {
+    public static Map<String, List<ItemStack>> getNameItemCache() {
         if (nameCache == null) {
             loadCache();
         }
@@ -139,30 +140,24 @@ public class DocumentationModule implements factorization.truth.api.IDocModule {
     }
 
     private static void loadCache() {
-        ArrayList<ItemStack> items = new ArrayList<ItemStack>();
+        List<ItemStack> items = new ArrayList<>();
         for (Item it : (Iterable<Item>) Item.itemRegistry) {
             if (it == null) continue;
             try {
                 it.getSubItems(it, it.getCreativeTab(), items);
             } catch (Throwable t) {
-                Core.logWarning("Error getting sub-items from item: " + it + " " + DataUtil.getName(it));
-                t.printStackTrace();
+                Core.logWarn("Error getting sub-items from item: " + it + " " + DataUtil.getName(it), t);
             }
         }
-        nameCache = new HashMap<String, ArrayList<ItemStack>>(items.size());
+        nameCache = new HashMap<>(items.size());
         for (ItemStack is : items) {
             if (is == null) continue;
             try {
                 String itemName = is.getUnlocalizedName();
-                ArrayList<ItemStack> list = nameCache.get(itemName);
-                if (list == null) {
-                    list = new ArrayList<ItemStack>();
-                    nameCache.put(itemName, list);
-                }
+                List<ItemStack> list = nameCache.computeIfAbsent(itemName, k -> new ArrayList<>());
                 list.add(is);
             } catch (Throwable t) {
-                Core.logSevere("Error getting names from item: " + is.getItem() + " " + DataUtil.getName(is.getItem()));
-                t.printStackTrace();
+                Core.logError("Error getting names from item: " + is.getItem() + " " + DataUtil.getName(is.getItem()), t);
             }
         }
     }
@@ -199,7 +194,7 @@ public class DocumentationModule implements factorization.truth.api.IDocModule {
     @SideOnly(Side.CLIENT)
     public static DocWorld loadWorld(String text) {
         try {
-            HookTargetsClient.clientWorldLoadEventAbort.set(Boolean.TRUE);
+            HookTargetsClient.clientWorldLoadEventAbort.set(true);
             NBTTagCompound tag = decodeNBT(text);
             return new DocWorld(tag);
         } catch (IOException e) {
@@ -262,12 +257,8 @@ public class DocumentationModule implements factorization.truth.api.IDocModule {
         if (name.startsWith("cgi/")) {
             return "\\generate{" + name.replace("cgi/", "") + "}";
         } else {
-            InputStream is = null;
-            try {
-                is = DocumentationModule.getDocumentResource(domain, name);
+            try (InputStream is = DocumentationModule.getDocumentResource(domain, name)) {
                 return DocumentationModule.readContents(name, is);
-            } finally {
-                Closeables.close(is, false);
             }
         }
     }
@@ -279,8 +270,7 @@ public class DocumentationModule implements factorization.truth.api.IDocModule {
 
     public static Slot getSlotUnderMouse() {
         Minecraft mc = Minecraft.getMinecraft();
-        if (!(mc.currentScreen instanceof GuiContainer)) return null;
-        GuiContainer screen = (GuiContainer) mc.currentScreen;
+        if (!(mc.currentScreen instanceof GuiContainer screen)) return null;
         //Copied from GuiScreen.handleMouseInput
         int mouseX = Mouse.getEventX() * screen.width / mc.displayWidth;
         int mouseY = screen.height - Mouse.getEventY() * screen.height / mc.displayHeight - 1;
@@ -294,7 +284,6 @@ public class DocumentationModule implements factorization.truth.api.IDocModule {
         ItemStack stack = slot == null ? null : slot.getStack();
         openBookForItem(stack, false);
     }
-
 
     @Override
     @SideOnly(Side.CLIENT)
@@ -339,10 +328,9 @@ public class DocumentationModule implements factorization.truth.api.IDocModule {
         }
         String name = is.getUnlocalizedName();
         for (String domain : DocReg.indexed_domains) {
-            InputStream topic_index = getDocumentResource(domain, "topic_index");
-            if (topic_index == null) return false;
-            BufferedReader br = new BufferedReader(new InputStreamReader(topic_index));
-            try {
+            try (InputStream topic_index = getDocumentResource(domain, "topic_index")) {
+                if (topic_index == null) return false;
+                BufferedReader br = new BufferedReader(new InputStreamReader(topic_index));
                 while (true) {
                     String line = br.readLine();
                     if (line == null) {
@@ -358,9 +346,7 @@ public class DocumentationModule implements factorization.truth.api.IDocModule {
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
-            } finally {
-                FzUtil.closeNoisily("closing topic_index", topic_index);
+                Core.logError("Can not read topics", e);
             }
         }
         mc.displayGuiScreen(new DocViewer(DocReg.default_recipe_domain, "cgi/recipes/" + name));
@@ -394,7 +380,7 @@ public class DocumentationModule implements factorization.truth.api.IDocModule {
         }
     }
 
-    private void handleImc(FMLInterModComms.IMCMessage message) throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+    private void handleImc(FMLInterModComms.IMCMessage message) {
         if (!message.key.equals("DocVar")) return;
         String[] parts = message.getStringValue().split("=", 2);
         String key = parts[0];

@@ -6,7 +6,7 @@ import java.util.Random;
 
 public final class NumUtil {
     public static Random rand = new Random();
-    private static ThreadLocal<Random> random_cache = new ThreadLocal<Random>();
+    private static ThreadLocal<Random> random_cache = new ThreadLocal<>();
 
     public static boolean significantChange(double a, double b, double threshold) {
         if (a == b) return false;
@@ -76,8 +76,7 @@ public final class NumUtil {
      */
     public static double clip(double v, double min, double max) {
         if (v < min) return min;
-        if (v > max) return max;
-        return v;
+        return Math.min(v, max);
     }
 
     /**
@@ -85,7 +84,6 @@ public final class NumUtil {
      */
     public static int clip(int v, int min, int max) {
         if (v < min) return min;
-        if (v > max) return max;
-        return v;
+        return Math.min(v, max);
     }
 }

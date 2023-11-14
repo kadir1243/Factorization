@@ -27,17 +27,19 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 
 public class ColossusController extends EntityFz implements IBossDisplayData, IDCController {
-    static enum BodySide { LEFT, RIGHT, CENTER, UNKNOWN_BODY_SIDE };
-    static enum LimbType {
+    enum BodySide { LEFT, RIGHT, CENTER, UNKNOWN_BODY_SIDE }
+
+    enum LimbType {
         BODY, ARM, LEG, UNKNOWN_LIMB_TYPE;
         
         public boolean isArmOrLeg() { return this == ARM || this == LEG; }
-    };
+    }
+
     LimbInfo[] limbs;
     IDeltaChunk body;
     LimbInfo bodyLimbInfo;
-    public final StateMachineExecutor walk_controller = new StateMachineExecutor(this, "walk", WalkState.IDLE);
-    public final StateMachineExecutor ai_controller = new StateMachineExecutor(this, "tech", Technique.STATE_MACHINE_ENTRY);
+    public final StateMachineExecutor<WalkState> walk_controller = new StateMachineExecutor<>(this, "walk", WalkState.IDLE);
+    public final StateMachineExecutor<Technique> ai_controller = new StateMachineExecutor<>(this, "tech", Technique.STATE_MACHINE_ENTRY);
     boolean setup = false;
     int arm_size = 0, arm_length = 0;
     int leg_size = 0, leg_length = 0;
@@ -51,9 +53,9 @@ public class ColossusController extends EntityFz implements IBossDisplayData, ID
     
     static Technique[] offensives, idlers, defensives;
     static {
-        ArrayList<Technique> _offensives = new ArrayList();
-        ArrayList<Technique> _idlers = new ArrayList();
-        ArrayList<Technique> _defensives = new ArrayList();
+        ArrayList<Technique> _offensives = new ArrayList<>();
+        ArrayList<Technique> _idlers = new ArrayList<>();
+        ArrayList<Technique> _defensives = new ArrayList<>();
         for (Technique tech : Technique.values()) {
             ArrayList<Technique> use;
             switch (tech.getKind()) {
@@ -69,7 +71,7 @@ public class ColossusController extends EntityFz implements IBossDisplayData, ID
         defensives = _defensives.toArray(new Technique[0]);
     }
     
-    private Coord path_target = null;
+    private Coord path_target;
     int turningDirection = 0;
     boolean target_changed = false;
     double walked = 0;
@@ -89,8 +91,8 @@ public class ColossusController extends EntityFz implements IBossDisplayData, ID
         super(world);
         path_target = null;
         ignoreFrustumCheck = true;
-        dataWatcher.addObject(_destroyed_cracked_block_id, (Integer) 0);
-        dataWatcher.addObject(_unbroken_cracked_block_id, (Integer) 0);
+        dataWatcher.addObject(_destroyed_cracked_block_id, 0);
+        dataWatcher.addObject(_unbroken_cracked_block_id, 0);
     }
     
     public ColossusController(World world, LimbInfo[] limbInfo, int arm_size, int arm_length, int leg_size, int leg_length, int width) {
@@ -117,28 +119,29 @@ public class ColossusController extends EntityFz implements IBossDisplayData, ID
     
     protected void calcLimbParity() {
         byte left_leg_parity = 0, left_arm_parity = 0, right_leg_parity = 0, right_arm_parity = 0;
-        discover_limb_parities: for (LimbInfo li : limbs) {
-            byte use_parity = 0;
+        for (LimbInfo li : limbs) {
+            byte use_parity;
             switch (li.type) {
-            default: continue discover_limb_parities;
-            case ARM:
-                if (li.side == BodySide.RIGHT) {
-                    use_parity = right_arm_parity++;
-                } else if (li.side == BodySide.LEFT) {
-                    use_parity = left_arm_parity++;
-                } else {
+                default:
                     continue;
-                }
-                break;
-            case LEG:
-                if (li.side == BodySide.RIGHT) {
-                    use_parity = right_leg_parity++;
-                } else if (li.side == BodySide.LEFT) {
-                    use_parity = left_leg_parity++;
-                } else {
-                    continue;
-                }
-                break;
+                case ARM:
+                    if (li.side == BodySide.RIGHT) {
+                        use_parity = right_arm_parity++;
+                    } else if (li.side == BodySide.LEFT) {
+                        use_parity = left_arm_parity++;
+                    } else {
+                        continue;
+                    }
+                    break;
+                case LEG:
+                    if (li.side == BodySide.RIGHT) {
+                        use_parity = right_leg_parity++;
+                    } else if (li.side == BodySide.LEFT) {
+                        use_parity = left_leg_parity++;
+                    } else {
+                        continue;
+                    }
+                    break;
             }
             li.parity = use_parity;
         }
@@ -265,7 +268,7 @@ public class ColossusController extends EntityFz implements IBossDisplayData, ID
     
     public void setTarget(Coord at) {
         if (at == null && path_target == null) return;
-        if (at != null && path_target != null && at.equals(path_target)) return;
+        if (at != null && at.equals(path_target)) return;
         if (at != null) {
             double dist = new Coord(this).distance(at);
         }
@@ -304,8 +307,7 @@ public class ColossusController extends EntityFz implements IBossDisplayData, ID
     
     public int getNaturalCrackCount() {
         int ls = leg_size + 1;
-        int count = ls * ls;
-        return count;
+        return ls * ls;
     }
 
     @Override
@@ -428,7 +430,7 @@ public class ColossusController extends EntityFz implements IBossDisplayData, ID
                 at.y = y;
                 Coord min = at.copy();
                 Coord max = at.copy();
-                int half = (int) ((leg_size + 1) / 2);
+                int half = (leg_size + 1) / 2;
                 min.x -= half;
                 min.z -= half;
                 max.x += half;

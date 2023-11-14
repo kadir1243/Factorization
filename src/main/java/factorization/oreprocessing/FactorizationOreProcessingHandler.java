@@ -1,26 +1,25 @@
 package factorization.oreprocessing;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import factorization.oreprocessing.ItemOreProcessing.OreType;
+import factorization.shared.Core;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.FurnaceRecipes;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fluids.FluidContainerRegistry;
 import net.minecraftforge.fluids.FluidContainerRegistry.FluidContainerData;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.oredict.OreDictionary;
 import net.minecraftforge.oredict.OreDictionary.OreRegisterEvent;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import factorization.oreprocessing.ItemOreProcessing.OreType;
-import factorization.shared.Core;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class FactorizationOreProcessingHandler {
     private static final String waterBucket = "fz.waterBucketLike";
-    private HashMap<String, ItemStack> bestIngots = new HashMap();
+    private Map<String, ItemStack> bestIngots = new HashMap<>();
     public static final float GRIND_MULTIPLY = 2F;
     public static final float REDUCE_MULTIPLY = 2.5F;
     public static final float CRYSTALLIZE_MULTIPLY = 3F;
@@ -43,17 +42,17 @@ public class FactorizationOreProcessingHandler {
     
     void addProcessingFront(OreType oreType, ItemStack ore, ItemStack ingot) {
         oreType.enable();
-        ItemStack dirty = Core.registry.ore_dirty_gravel.makeStack(oreType);
-        ItemStack clean = Core.registry.ore_clean_gravel.makeStack(oreType);
+        ItemStack dirty = oreType.getStack("gravel");
+        ItemStack clean = oreType.getStack("clean");
         TileEntityGrinder.addRecipe(ore, dirty, GRIND);
         TileEntitySlagFurnace.SlagRecipes.register(dirty, 1.1F, ingot, 0.2F, Blocks.dirt); //Or it could output reduced chunks instead.
         ItemStack clean8 = clean.copy();
         clean8.stackSize = 8;
-        
+
         //dirty gravel -> clean gravel
         Core.registry.shapelessOreRecipe(clean, waterBucket, dirty);
         Core.registry.shapelessOreRecipe(clean8, waterBucket, dirty, dirty, dirty, dirty, dirty, dirty, dirty, dirty);
-        
+
         smelt(clean, ore, ingot);
         smelt(dirty, ore, ingot);
     }
@@ -66,8 +65,8 @@ public class FactorizationOreProcessingHandler {
         }
         oreType.processingResult = ingot;
         
-        ItemStack reduced = Core.registry.ore_reduced.makeStack(oreType);
-        ItemStack crystal = Core.registry.ore_crystal.makeStack(oreType);
+        ItemStack reduced = oreType.getStack("reduced");
+        ItemStack crystal = oreType.getStack("crystal");
         
         TileEntityCrystallizer.addRecipe(reduced, crystal, CRYSTALLIZE, Core.registry.aqua_regia);
         
@@ -78,17 +77,17 @@ public class FactorizationOreProcessingHandler {
     
     void addStandardReduction(OreType oreType, ItemStack ore, ItemStack ingot) {
         oreType.enable();
-        ItemStack clean = Core.registry.ore_clean_gravel.makeStack(oreType);
-        ItemStack reduced = Core.registry.ore_reduced.makeStack(oreType);
+        ItemStack clean = oreType.getStack("clean");
+        ItemStack reduced = oreType.getStack("reduced");
         TileEntitySlagFurnace.SlagRecipes.register(ore, 1.2F, ingot, 0.4F, oreType.surounding_medium);
         int r = (int)REDUCE;
         TileEntitySlagFurnace.SlagRecipes.register(clean, r, reduced, REDUCE - r, reduced);
     }
     
     void addGalenaReduction(OreType oreType, ItemStack ore) {
-        ItemStack clean_galena = Core.registry.ore_clean_gravel.makeStack(oreType);
-        ItemStack reduced_silver = Core.registry.ore_reduced.makeStack(OreType.SILVER);
-        ItemStack reduced_lead = Core.registry.ore_reduced.makeStack(OreType.LEAD);
+        ItemStack clean_galena = oreType.getStack("clean");
+        ItemStack reduced_silver = OreType.SILVER.getStack("reduced");
+        ItemStack reduced_lead = OreType.LEAD.getStack("reduced");
         
         TileEntitySlagFurnace.SlagRecipes.register(clean_galena, REDUCE, reduced_lead, REDUCE, reduced_silver);
     }

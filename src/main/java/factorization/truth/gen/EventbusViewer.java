@@ -35,11 +35,10 @@ public class EventbusViewer implements IDocGenerator {
             out.write("Reflection failed!");
             return;
         }
-        HashSet<Method> methodsSet = new HashSet<Method>();
-        HashSet<Class<?>> eventTypesSet = new HashSet<Class<?>>();
+        Set<Method> methodsSet = new HashSet<>();
+        Set<Class<?>> eventTypesSet = new HashSet<>();
         for (Map.Entry<Object, ArrayList<IEventListener>> entry : listeners.entrySet()) {
             Object eventHandler = entry.getKey();
-            ArrayList<IEventListener> eventListeners = entry.getValue();
             for (Method method : eventHandler.getClass().getMethods()) {
                 if (method.getAnnotation(SubscribeEvent.class) != null) {
                     methodsSet.add(method);
@@ -47,22 +46,10 @@ public class EventbusViewer implements IDocGenerator {
                 }
             }
         }
-        ArrayList<Method> methods = new ArrayList(methodsSet);
-        Collections.sort(methods, new Comparator<Method>() {
-            @Override
-            public int compare(Method o1, Method o2) {
-                int c = o1.getClass().getCanonicalName().compareTo(o2.getClass().getCanonicalName());
-                if (c != 0) return c;
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
-        ArrayList<Class<?>> eventTypes = new ArrayList(eventTypesSet);
-        Collections.sort(eventTypes, new Comparator<Class<?>>() {
-            @Override
-            public int compare(Class<?> o1, Class<?> o2) {
-                return o1.getCanonicalName().compareTo(o2.getCanonicalName());
-            }
-        });
+        List<Method> methods = new ArrayList<>(methodsSet);
+        methods.sort(Comparator.comparing((Method o) -> o.getClass().getCanonicalName()).thenComparing(Method::getName));
+        List<Class<?>> eventTypes = new ArrayList<>(eventTypesSet);
+        eventTypes.sort(Comparator.comparing(Class::getCanonicalName));
 
         if (matchEvent != null) {
             boolean first = true;
@@ -102,8 +89,7 @@ public class EventbusViewer implements IDocGenerator {
                     String hc = highest.getCanonicalName();
                     int start = hc.length();
                     start -= highest.getSimpleName().length();
-                    String ec = canonicalName;
-                    simpleName = ec.substring(start);
+                    simpleName = canonicalName.substring(start);
                 } else {
                     simpleName = eventType.getSimpleName();
                 }

@@ -19,55 +19,81 @@ import net.minecraftforge.common.util.ForgeDirection;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.function.Supplier;
 
 public abstract class ServoComponent implements IDataSerializable {
-    private static HashMap<String, Class<? extends ServoComponent>> componentMap = new HashMap<String, Class<? extends ServoComponent>>(50, 0.5F);
+    private static Map<String, Supplier<? extends ServoComponent>> componentMap = new HashMap<>(50, 0.5F);
     final private static String componentTagKey = "SCId";
 
-    public static void register(Class<? extends ServoComponent> componentClass, ArrayList<ItemStack> sortedList) {
+    public static void register(Supplier<? extends ServoComponent> componentClass, List<ItemStack> sortedList) {
         String name;
         ServoComponent decor;
-        try {
-            decor = componentClass.getConstructor().newInstance();
-        } catch (/*ReflectiveOperationException Java 7 */ Throwable e) {
-            Core.logSevere("Unable to instantiate %s: %s", componentClass, e);
-            e.printStackTrace();
-            throw new IllegalArgumentException(e);
-        }
+        decor = componentClass.get();
         name = decor.getName();
-        componentMap.put(name, componentClass);
+        componentMap.put(name, new EqualibleSupplier<>(componentClass));
         sortedList.add(decor.toItem());
     }
 
-    public static Class<? extends ServoComponent> getComponent(String name) {
+    private static final class EqualibleSupplier<T> implements Supplier<T> {
+        private final Supplier<T> supplier;
+        private boolean isCreated;
+        private T instance;
+
+        private EqualibleSupplier(Supplier<T> supplier) {
+            this.supplier = supplier;
+        }
+
+        @Override
+        public T get() {
+            if (isCreated) return instance;
+            T t = supplier.get();
+            this.instance = t;
+            this.isCreated = true;
+            return t;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj instanceof Supplier<?> s) {
+                return Objects.equals(s.get(), obj);
+            }
+            if (!isCreated) get();
+            return Objects.equals(this.instance, obj);
+        }
+
+        @Override
+        public int hashCode() {
+            if (!isCreated) get();
+            return Objects.hashCode(this.instance);
+        }
+    }
+
+    public static Supplier<? extends ServoComponent> getComponent(String name) {
         return componentMap.get(name);
     }
 
-    private static BiMap<Short, Class<? extends ServoComponent>> the_idMap = null;
-    private static BiMap<Short, Class<? extends ServoComponent>> getPacketIdMap() {
+    private static BiMap<Short, ServoComponent> the_idMap = null;
+    private static BiMap<Short, ServoComponent> getPacketIdMap() {
         if (the_idMap == null) {
-            ArrayList<String> names = new ArrayList<String>(componentMap.keySet());
+            List<String> names = new ArrayList<>(componentMap.keySet());
             Collections.sort(names);
-            ImmutableBiMap.Builder<Short, Class<? extends ServoComponent>> builder = ImmutableBiMap.<Short, Class<? extends ServoComponent>>builder();
+            ImmutableBiMap.Builder<Short, ServoComponent> builder = ImmutableBiMap.builder();
             for (short i = 0; i < names.size(); i++) {
-                builder.put(i, componentMap.get(names.get(i)));
+                builder.put(i, componentMap.get(names.get(i)).get());
             }
             the_idMap = builder.build();
         }
         return the_idMap;
     }
     
-    public static Iterable<Class<? extends ServoComponent>> getComponents() {
+    public static Iterable<ServoComponent> getComponents() {
         return getPacketIdMap().values();
     }
     
     public short getNetworkId() {
-        BiMap<Class<? extends ServoComponent>, Short> map = getPacketIdMap().inverse();
-        Short o = map.get(getClass());
+        BiMap<ServoComponent, Short> map = getPacketIdMap().inverse();
+        Short o = map.get(this);
         if (o == null) {
             throw new IllegalArgumentException(getClass() + " is not a registered ServoComponent");
         }
@@ -84,14 +110,8 @@ public abstract class ServoComponent implements IDataSerializable {
             } else {
                 componentName = data.asSameShare(componentTagKey).putString(getName());
             }
-            Class<? extends ServoComponent> componentClass = getComponent(componentName);
-            ServoComponent sc;
-            try {
-                sc = componentClass.newInstance();
-            } catch (Throwable e) {
-                e.printStackTrace();
-                return this;
-            }
+            Supplier<? extends ServoComponent> componentClass = getComponent(componentName);
+            ServoComponent sc = componentClass.get();
             return sc.putData(prefix, data);
         } else {
             data.asSameShare(prefix + componentTagKey).putString(getName());
@@ -106,7 +126,7 @@ public abstract class ServoComponent implements IDataSerializable {
             return null;
         }
         String componentName = tag.getString(componentTagKey);
-        Class<? extends ServoComponent> componentClass = getComponent(componentName);
+        Supplier<? extends ServoComponent> componentClass = getComponent(componentName);
         if (componentClass == null) {
             Core.logWarning("Unknown servo component with ID %s. Removing tag info!", componentName);
             Core.logWarning("The tag: %s", tag);
@@ -115,7 +135,7 @@ public abstract class ServoComponent implements IDataSerializable {
             return null;
         }
         try {
-            ServoComponent decor = componentClass.newInstance();
+            ServoComponent decor = componentClass.get();
             return new DataInNBT(tag).as(Share.VISIBLE, "sc").putIDS(decor);
         } catch (Throwable e) {
             e.printStackTrace();
@@ -139,15 +159,14 @@ public abstract class ServoComponent implements IDataSerializable {
     
     static ServoComponent readFromPacket(ByteBuf dis) throws IOException {
         short id = dis.readShort();
-        Class<? extends ServoComponent> componentClass = getPacketIdMap().get(id);
+        ServoComponent componentClass = getPacketIdMap().get(id);
         if (componentClass == null) {
             Core.logWarning("Unknown servo component with #ID %s", id);
             return null;
         }
         try {
-            ServoComponent decor = componentClass.newInstance();
-            (new DataInByteBuf(dis, Side.CLIENT)).as(Share.VISIBLE, "sc").putIDS(decor);
-            return decor;
+            new DataInByteBuf(dis, Side.CLIENT).as(Share.VISIBLE, "sc").putIDS(componentClass);
+            return componentClass;
         } catch (IOException e) {
             throw e;
         } catch (Throwable e) {
@@ -211,66 +230,61 @@ public abstract class ServoComponent implements IDataSerializable {
     }
     
     @SideOnly(Side.CLIENT)
-    public void addInformation(List info) {
-        //info.add("Servo Component");
+    public void addInformation(List<String> info) {
     }
 
-    static ArrayList<ItemStack> sorted_instructions = new ArrayList<ItemStack>();
-    static ArrayList<ItemStack> sorted_decors = new ArrayList<ItemStack>();
+    static List<ItemStack> sorted_instructions = new ArrayList<>();
+    static List<ItemStack> sorted_decors = new ArrayList<>();
 
     static {
-        //registerRecursivelyFromPackage("factorization.common.servo.actuators");
-        //registerRecursivelyFromPackage("factorization.common.servo.instructions");
-        Class<? extends ServoComponent>[] decorations = (Class<? extends ServoComponent>[])new Class[] {
-                WoodenServoGrate.class,
-                GlassServoGrate.class,
-                IronServoGrate.class,
-                ScanColor.class,
+        @SuppressWarnings("unchecked")
+        Supplier<? extends ServoComponent>[] decorations = new Supplier[] {
+                WoodenServoGrate::new,
+                GlassServoGrate::new,
+                IronServoGrate::new,
+                ScanColor::new,
         };
-        Class<? extends ServoComponent>[] instructions = (Class<? extends ServoComponent>[])new Class[] {
+        @SuppressWarnings("unchecked")
+        Supplier<? extends ServoComponent>[] instructions = new Supplier[] {
                 // Color by class, sort by color
                 // Cyan: Motion instructions
-                EntryControl.class,
-                SetDirection.class,
-                Spin.class,
-                RotateTop.class,
-                SetSpeed.class,
-                Trap.class,
+                EntryControl::new,
+                SetDirection::new,
+                Spin::new,
+                RotateTop::new,
+                SetSpeed::new,
+                Trap::new,
 
                 // Red: Redstone-ish instructions
-                RedstonePulse.class,
-                SocketCtrl.class,
-                ReadRedstone.class,
-                CountItems.class,
-                ShifterControl.class,
+                RedstonePulse::new,
+                SocketCtrl::new,
+                ReadRedstone::new,
+                CountItems::new,
+                ShifterControl::new,
 
                 // Yellow: Math instructions
-                Drop.class,
-                Dup.class,
-                IntegerValue.class,
-                Sum.class,
-                Product.class,
-                BooleanValue.class,
-                Compare.class,
+                Drop::new,
+                Dup::new,
+                IntegerValue::new,
+                Sum::new,
+                Product::new,
+                BooleanValue::new,
+                Compare::new,
 
                 // White: Computation instructions
-                Jump.class,
-                SetEntryAction.class,
-                SetRepeatedInstruction.class,
-                InstructionGroup.class,
+                Jump::new,
+                SetEntryAction::new,
+                SetRepeatedInstruction::new,
+                InstructionGroup::new,
         };
 
-        for (Class<? extends ServoComponent> cl : decorations) register(cl, sorted_decors);
-        for (Class<? extends ServoComponent> cl : instructions) register(cl, sorted_instructions);
+        for (Supplier<? extends ServoComponent> cl : decorations) register(cl, sorted_decors);
+        for (Supplier<? extends ServoComponent> cl : instructions) register(cl, sorted_instructions);
     }
     
     public static void setupRecipes() {
-        for (Class<? extends ServoComponent> klazz : componentMap.values()) {
-            try {
-                klazz.newInstance().addRecipes();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        for (Supplier<? extends ServoComponent> klazz : componentMap.values()) {
+            klazz.get().addRecipes();
         }
     }
     

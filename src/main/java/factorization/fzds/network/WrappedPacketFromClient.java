@@ -6,7 +6,6 @@ import cpw.mods.fml.common.network.internal.FMLProxyPacket;
 import cpw.mods.fml.relauncher.Side;
 import factorization.fzds.Hammer;
 import factorization.shared.Core;
-import net.minecraft.client.network.NetHandlerPlayClient;
 import net.minecraft.network.INetHandler;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.network.Packet;
@@ -38,8 +37,7 @@ public class WrappedPacketFromClient extends WrappedPacket {
         } else {
             handler = liason.playerNetServerHandler;
         }
-        if (wrapped instanceof FMLProxyPacket) {
-            FMLProxyPacket fml = (FMLProxyPacket) wrapped;
+        if (wrapped instanceof FMLProxyPacket fml) {
             NetHandlerPlayServer nhps = (NetHandlerPlayServer) handler;
             NetworkDispatcher dispatcher = nhps.netManager.channel().attr(NetworkDispatcher.FML_DISPATCHER).get();
             fml.setTarget(Side.CLIENT);
@@ -53,7 +51,7 @@ public class WrappedPacketFromClient extends WrappedPacket {
     }
 
     @Override
-    protected BiMap<Integer, Class> getPacketMap() {
+    protected BiMap<Integer, Class<? extends Packet>> getPacketMap() {
         return clientPacketMap;
     }
 

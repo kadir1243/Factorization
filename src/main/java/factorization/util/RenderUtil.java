@@ -9,6 +9,7 @@ import net.minecraftforge.common.util.ForgeDirection;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.glu.GLU;
 
+import static org.lwjgl.opengl.GL11.GL_NO_ERROR;
 import static org.lwjgl.opengl.GL11.glGetError;
 
 public final class RenderUtil {
@@ -27,31 +28,19 @@ public final class RenderUtil {
     @SideOnly(Side.CLIENT)
     public static void rotateForDirection(ForgeDirection dir) {
         switch (dir) {
-        case WEST:
-            break;
-        case EAST:
-            GL11.glRotatef(180, 0, 1, 0);
-            break;
-        case NORTH:
-            GL11.glRotatef(-90, 0, 1, 0);
-            break;
-        case SOUTH:
-            GL11.glRotatef(90, 0, 1, 0);
-            break;
-        case UP:
-            GL11.glRotatef(-90, 0, 0, 1);
-            break;
-        case DOWN:
-            GL11.glRotatef(90, 0, 0, 1);
-            break;
-        case UNKNOWN: break;
+            case EAST -> GL11.glRotatef(180, 0, 1, 0);
+            case NORTH -> GL11.glRotatef(-90, 0, 1, 0);
+            case SOUTH -> GL11.glRotatef(90, 0, 1, 0);
+            case UP -> GL11.glRotatef(-90, 0, 0, 1);
+            case DOWN -> GL11.glRotatef(90, 0, 0, 1);
+            case WEST, UNKNOWN -> {}
         }
     }
 
     @SideOnly(Side.CLIENT)
     public static boolean checkGLError(String op) {
         int errSym = glGetError();
-        if (errSym != 0) {
+        if (errSym != GL_NO_ERROR) {
             Core.logSevere("GL Error @ " + op);
             Core.logSevere(errSym + ": " + GLU.gluErrorString(errSym));
             return true;

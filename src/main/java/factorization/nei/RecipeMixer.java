@@ -60,11 +60,11 @@ public class RecipeMixer extends TemplateRecipeHandler {
     @Override
     public void loadUsageRecipes(ItemStack ingredient) {
         //XXX NOTE: This is probably a lame implementation of this function.
-        List<ItemStack> items = new ArrayList();
+        List<ItemStack> items = new ArrayList<>();
         outerloop: for (RecipeMatchInfo mr : getCache()) {
             if (ingredient == null) {
                 arecipes.add(new CachedMixerRecipe(mr));
-                continue outerloop;
+                continue;
             }
             for (Object o : mr.inputs) {
                 items.clear();

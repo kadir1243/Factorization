@@ -1,18 +1,17 @@
 package factorization.servo.instructions;
 
-import java.io.IOException;
-
-import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.IIcon;
-import net.minecraftforge.common.util.ForgeDirection;
 import factorization.api.Coord;
 import factorization.api.datahelpers.DataHelper;
 import factorization.api.datahelpers.IDataSerializable;
 import factorization.servo.Decorator;
 import factorization.servo.ServoMotor;
 import factorization.shared.Core;
+import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.IIcon;
+import net.minecraftforge.common.util.ForgeDirection;
+
+import java.io.IOException;
 
 public class WoodenServoGrate extends Decorator {
 

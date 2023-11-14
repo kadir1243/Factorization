@@ -49,7 +49,7 @@ public class EntityCitizen extends EntityFz {
 
     Quaternion rotation_start = NORMAL, rotation_target = NORMAL;
 
-    final EntityReference<EntityPlayer> playerRef = new EntityReference<EntityPlayer>();
+    final EntityReference<EntityPlayer> playerRef = new EntityReference<>();
 
     public EntityCitizen(World w) {
         super(w);
@@ -255,7 +255,7 @@ public class EntityCitizen extends EntityFz {
         player.setJumping(false);
         if (player.rotationPitch > -80) {
             int n = 20;
-            player.rotationPitch = (player.rotationPitch * n + -90) / (n + 1);
+            player.rotationPitch = (player.rotationPitch * n - 90) / (n + 1);
         }
         // This is fine, right? Right?
         Minecraft mc = Minecraft.getMinecraft();
@@ -383,7 +383,7 @@ public class EntityCitizen extends EntityFz {
         int r = 12;
         AxisAlignedBB range = boundingBox.expand(r, r, r);
         Vec3 me = SpaceUtil.fromEntPos(this);
-        for (Entity ent : (Iterable<Entity>) worldObj.selectEntitiesWithinAABB(Entity.class, range, IMob.mobSelector)) {
+        for (Entity ent : worldObj.selectEntitiesWithinAABB(Entity.class, range, IMob.mobSelector)) {
             Vec3 you = SpaceUtil.fromEntPos(ent);
             Vec3 delta = SpaceUtil.subtract(you, me).normalize();
             SpaceUtil.incrScale(delta, r * 2 + Math.abs(rand.nextGaussian()));

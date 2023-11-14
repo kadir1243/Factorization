@@ -11,7 +11,7 @@ import factorization.api.datahelpers.Share;
 
 public class Charge implements IDataSerializable {
     ConductorSet conductorSet = null;
-    IChargeConductor conductor = null;
+    IChargeConductor conductor;
     boolean isConductorSetLeader = false;
     boolean justCreated = true;
     
@@ -81,7 +81,7 @@ public class Charge implements IDataSerializable {
 
     public void readFromNBT(NBTTagCompound tag, String name) {
         int val = tag.getInteger(name);
-        setValue(val < 0 ? 0 : val);
+        setValue(Math.max(val, 0));
     }
     
     public void readFromNBT(NBTTagCompound tag) {

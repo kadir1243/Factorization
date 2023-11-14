@@ -5,5 +5,4 @@ import cpw.mods.fml.common.eventhandler.Event;
 
 @Cancelable
 public class HandleUseKeyEvent extends Event {
-
 }

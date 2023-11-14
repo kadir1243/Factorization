@@ -1,6 +1,7 @@
 package factorization.common;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import factorization.misc.ItemMover;
 import net.minecraft.entity.player.EntityPlayer;
@@ -15,11 +16,11 @@ public enum Command {
     itemTransferUpShift(19, true), itemTransferDownShift(20, true), itemTransferLeftShift(21, true), itemTransferRightShift(22, true);
 
     static class Names {
-        static HashMap<Byte, Command> map = new HashMap<Byte, Command>();
+        static Map<Byte, Command> map = new HashMap<>();
     }
 
     public byte id;
-    boolean executeLocally = false;
+    boolean executeLocally;
     public Command reverse = this;
 
     Command(int id, boolean executeLocally) {

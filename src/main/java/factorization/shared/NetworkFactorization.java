@@ -408,7 +408,8 @@ public class NetworkFactorization {
         // Messages to/from the player
         ArtifactForgeName(false, true), ArtifactForgeError(false, true);
         
-        public boolean isEntityMessage, isPlayerMessage;
+        public final boolean isEntityMessage;
+        public final boolean isPlayerMessage;
         private static final MessageType[] valuesCache = values();
         
         private final byte id;

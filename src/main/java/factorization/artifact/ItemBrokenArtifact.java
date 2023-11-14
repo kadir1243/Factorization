@@ -56,17 +56,17 @@ public class ItemBrokenArtifact extends ItemFactorization {
     }
 
     @Override
-    public void getSubItems(Item stack, CreativeTabs tab, List list) { }
+    public void getSubItems(Item stack, CreativeTabs tab, List<ItemStack> list) { }
 
     @Override
-    protected void addExtraInformation(ItemStack is, EntityPlayer player, List list, boolean verbose) {
+    protected void addExtraInformation(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {
         ItemStack held = get(is);
         if (held == null) return;
         ItemStack fresh = new ItemStack(held.getItem());
         ItemStack repair = getRepairItemStack(fresh);
         String got = LangUtil.translateWithCorrectableFormat("item.factorization:brokenArtifact.repairhint", repair.getDisplayName());
         Collections.addAll(list, got.split("\\\\n"));
-        List infos = held.getTooltip(player, false);
+        List<String> infos = held.getTooltip(player, false);
         if (!infos.isEmpty()) {
             list.add("");
             list.addAll(infos);

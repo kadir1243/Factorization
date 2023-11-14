@@ -1,8 +1,7 @@
 package factorization.shared;
 
-import java.io.DataInput;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.relauncher.Side;
@@ -35,31 +34,27 @@ public enum Sound {
     legendariumInsert("factorization:legendarium.insert", 0.75, 1.0, true),
     
     ;
-    String src;
-    float volume, pitch;
-    int index;
-    boolean share;
+    private final String src;
+    private final float volume;
+    private final float pitch;
+    private int index;
+    private final boolean share;
+    private static final List<Sound> SOUNDS = new ArrayList<>();
 
-    static class sound {
-        static ArrayList<Sound> list = new ArrayList();
-    }
-
-    void init(String src, double volume, double pitch) {
-        this.src = src;
-        this.volume = (float) volume;
-        this.pitch = (float) pitch;
-        this.index = sound.list.size();
-        sound.list.add(this);
-        
+    private void addToList() {
+        this.index = SOUNDS.size();
+        SOUNDS.add(this);
     }
 
     Sound(String src, double volume, double pitch) {
-        init(src, volume, pitch);
-        this.share = false;
+        this(src, volume, pitch, false);
     }
 
     Sound(String src, double volume, double pitch, boolean share) {
-        init(src, volume, pitch);
+        addToList();
+        this.src = src;
+        this.volume = (float) volume;
+        this.pitch = (float) pitch;
         this.share = share;
     }
 
@@ -79,7 +74,7 @@ public enum Sound {
         if (player == null) {
             return;
         }
-        sound.list.get(index).playAt(coord);
+        SOUNDS.get(index).playAt(coord);
     }
     
     public void playAt(Coord c) {

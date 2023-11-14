@@ -12,9 +12,9 @@ import net.minecraft.inventory.Container;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.Slot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class ContainerForge extends Container {
     final Coord orig;
@@ -24,11 +24,11 @@ public class ContainerForge extends Container {
     int player_slot_start, player_slot_end;
     public int invdx, invdy;
     int slot_start, slot_end;
-    ArrayList<Slot> playerSlots = new ArrayList<Slot>();
-    ArrayList<Slot> toolSlots = new ArrayList<Slot>();
-    ArrayList<Slot> potencySlots = new ArrayList<Slot>();
-    ArrayList<Slot> enchantSlots = new ArrayList<Slot>();
-    ArrayList<Slot> dyeSlots = new ArrayList<Slot>();
+    List<Slot> playerSlots = new ArrayList<>();
+    List<Slot> toolSlots = new ArrayList<>();
+    List<Slot> potencySlots = new ArrayList<>();
+    List<Slot> enchantSlots = new ArrayList<>();
+    List<Slot> dyeSlots = new ArrayList<>();
 
     @Override
     public ItemStack transferStackInSlot(EntityPlayer player, int slotIndex) {
@@ -57,7 +57,7 @@ public class ContainerForge extends Container {
         invdy = 10;
         addPlayerSlots(player.inventory);
         int dx = -4 - 15, dy = -3;
-        s(new ArrayList(), new SlotSane(forge, InventoryForge.SLOT_OUT, 80 + dx, 71 + dy));
+        s(new ArrayList<>(), new SlotSane(forge, InventoryForge.SLOT_OUT, 80 + dx, 71 + dy));
         s(toolSlots, new SlotSane(forge, InventoryForge.SLOT_FIRST, 52 + dx, 71 + dy));
         s(toolSlots, new SlotSane(forge, InventoryForge.SLOT_SECOND, 108 + dx, 71 + dy));
         s(potencySlots, new SlotSane(forge, InventoryForge.SLOT_POTENT_START + 0, 80 + dx, 38 + dy));
@@ -69,7 +69,7 @@ public class ContainerForge extends Container {
         s(dyeSlots, new SlotSane(forge, InventoryForge.SLOT_DYE_1, 152 + 15 + dx, 134 + dy));
     }
 
-    void s(ArrayList<Slot> list, Slot slot) {
+    void s(List<Slot> list, Slot slot) {
         list.add(slot);
         addSlotToContainer(slot);
     }

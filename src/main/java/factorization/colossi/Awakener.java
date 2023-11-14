@@ -5,8 +5,6 @@ import factorization.api.DeltaCoord;
 import factorization.colossi.ColossusController.BodySide;
 import factorization.colossi.ColossusController.LimbType;
 import factorization.fzds.DeltaChunk;
-import factorization.fzds.DeltaChunk.AreaMap;
-import factorization.fzds.DeltaChunk.DseDestination;
 import factorization.fzds.interfaces.DeltaCapability;
 import factorization.fzds.interfaces.IDeltaChunk;
 import factorization.notify.Notice;
@@ -164,7 +162,7 @@ public class Awakener {
     
     public final boolean abandonedLongAgo_thisAncientGuardianBurnsItsRemainingPower() {
         msg("Awakening Collossus at %s...", new Coord(heartTE));
-        Set<Coord> heart = new HashSet<Coord>();
+        Set<Coord> heart = new HashSet<>();
         heart.add(new Coord(heartTE));
         details("heart", heart);
         Set<Coord> body = iterateFrom(heart, BODY_ANY, false);
@@ -191,7 +189,7 @@ public class Awakener {
         
         msg("Limb sizes match");
         
-        ArrayList<SetAndInfo> limbInfo = new ArrayList();
+        ArrayList<SetAndInfo> limbInfo = new ArrayList<>();
         for (Set<Coord> arm : arms) {
             Vec3 joint = calculateJointPosition(arm, arm_size, arm_length, LimbType.ARM);
             SetAndInfo sai = new SetAndInfo(arm, arm_length, arm_size, joint, LimbType.ARM, getSide(arm));
@@ -210,7 +208,7 @@ public class Awakener {
         SetAndInfo sai = new SetAndInfo(body, measure_dim(body, 1), leg_size, body_center_of_mass, LimbType.BODY, BodySide.RIGHT);
         limbInfo.add(sai);
         
-        ArrayList<Set<Coord>> all_members = new ArrayList();
+        ArrayList<Set<Coord>> all_members = new ArrayList<>();
         all_members.add(body);
         all_members.addAll(arms);
         all_members.addAll(legs);
@@ -243,8 +241,8 @@ public class Awakener {
 
         final int max_iter = leg_size + 6;
         final int arm_iter = 2;
-        HashSet<Coord> exclude = includeShell(all_members, new HashSet(), arm_iter);
-        ArrayList<Set<Coord>> justTheBody = new ArrayList<Set<Coord>>();
+        HashSet<Coord> exclude = includeShell(all_members, new HashSet<>(), arm_iter);
+        ArrayList<Set<Coord>> justTheBody = new ArrayList<>();
         justTheBody.add(body);
         includeShell(justTheBody, exclude, max_iter - arm_iter);
         msg("Attatched adjacent blocks. New body:");
@@ -256,7 +254,7 @@ public class Awakener {
         // markSets(arms, "-");
         // mark(body, "+");
         
-        ArrayList<LimbInfo> parts = new ArrayList();
+        List<LimbInfo> parts = new ArrayList<>();
         int i = 0;
         IDeltaChunk bodyIdc = null;
         for (SetAndInfo partInfo : limbInfo) {
@@ -288,7 +286,7 @@ public class Awakener {
         
         int part_size = parts.size();
         msg("Activated with %s parts", part_size);
-        LimbInfo[] info = parts.toArray(new LimbInfo[part_size]);
+        LimbInfo[] info = parts.toArray(new LimbInfo[0]);
         int body_size = max.z - min.z;
         ColossusController controller = new ColossusController(heartTE.getWorldObj(), info, arm_size, arm_length, leg_size, leg_length, body_size);
         new Coord(heartTE).setAsEntityLocation(controller);
@@ -448,8 +446,8 @@ public class Awakener {
     }
     
     Set<Coord> iterateFrom(Set<Coord> start, BlockState block, boolean diag) {
-        ArrayList<Coord> frontier = new ArrayList(start.size());
-        Set<Coord> ret = new HashSet();
+        ArrayList<Coord> frontier = new ArrayList<>(start.size());
+        Set<Coord> ret = new HashSet<>();
         frontier.addAll(start);
         for (Coord s : start) {
             if (block.matches(s)) {
@@ -469,11 +467,11 @@ public class Awakener {
     }
     
     ArrayList<Set<Coord>> getConnectedLimbs(Set<Coord> body, BlockState block) {
-        ArrayList<Set<Coord>> ret = new ArrayList();
+        ArrayList<Set<Coord>> ret = new ArrayList<>();
         for (Coord at : body) {
             for (Coord neighbor : at.getNeighborsAdjacent()) {
                 if (!body.contains(neighbor) && !inClasses(ret, neighbor) && block.matches(neighbor)) {
-                    Set<Coord> newSeed = new HashSet();
+                    Set<Coord> newSeed = new HashSet<>();
                     newSeed.add(neighbor);
                     Set<Coord> newTerrain = iterateFrom(newSeed, block, false);
                     ret.add(newTerrain);
@@ -491,12 +489,12 @@ public class Awakener {
     }
 
     HashSet<Coord> includeShell(ArrayList<Set<Coord>> sets, HashSet<Coord> exclude, int maxIter) {
-        sets = new ArrayList<Set<Coord>>(sets);
+        sets = new ArrayList<>(sets);
         for (Set<Coord> set : sets) {
             exclude.addAll(set);
         }
         boolean found = true;
-        ArrayList<Coord> pending = new ArrayList<Coord>();
+        ArrayList<Coord> pending = new ArrayList<>();
         while (found && maxIter --> 0) {
             found = false;
             for (Iterator<Set<Coord>> iterator = sets.iterator(); iterator.hasNext(); ) {
@@ -552,12 +550,9 @@ public class Awakener {
         min.adjust(new DeltaCoord(-r, -r, -r));
         max.adjust(new DeltaCoord(r, r, r));
 
-        IDeltaChunk ret = DeltaChunk.makeSlice(ColossusFeature.deltachunk_channel, min, max, new AreaMap() {
-            @Override
-            public void fillDse(DseDestination destination) {
-                for (Coord c : parts) {
-                    destination.include(c);
-                }
+        IDeltaChunk ret = DeltaChunk.makeSlice(ColossusFeature.deltachunk_channel, min, max, destination -> {
+            for (Coord c : parts) {
+                destination.include(c);
             }
         }, true);
         for (DeltaCapability permit : new DeltaCapability[] {

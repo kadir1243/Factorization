@@ -59,10 +59,10 @@ public class ItemLeafBomb extends ItemFactorization {
     }
 
     @Override
-    public void getSubItems(Item item, CreativeTabs tab, List list) {
+    public void getSubItems(Item item, CreativeTabs tab, List<ItemStack> list) {
         if (todays_leaves == null) {
             Random rand = new Random(Calendar.getInstance().get(Calendar.DAY_OF_WEEK));
-            ReservoirSampler<ItemStack> sampler = new ReservoirSampler<ItemStack>(4, rand);
+            ReservoirSampler<ItemStack> sampler = new ReservoirSampler<>(4, rand);
             for (ItemStack is : all) {
                 if (is.getDisplayName().contains(".")) continue;
                 sampler.give(is);
@@ -72,10 +72,10 @@ public class ItemLeafBomb extends ItemFactorization {
         list.addAll(todays_leaves);
     }
 
-    ArrayList<ItemStack> all = new ArrayList<ItemStack>();
+    private final List<ItemStack> all = new ArrayList<>();
 
-    transient ArrayList<ItemStack> _leaves = new ArrayList<ItemStack>();
-    transient ArrayList<String> known = new ArrayList<String>();
+    transient ArrayList<ItemStack> _leaves = new ArrayList<>();
+    transient ArrayList<String> known = new ArrayList<>();
     List<ItemStack> todays_leaves = null;
 
     private void add(ItemStack leaf) {
@@ -139,7 +139,7 @@ public class ItemLeafBomb extends ItemFactorization {
     }
 
     @Override
-    protected void addExtraInformation(ItemStack is, EntityPlayer player, List list, boolean verbose) {
+    protected void addExtraInformation(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {
         ItemStack leaves = getLeaves(is);
         if (leaves == null) return;
         list.add(leaves.getItem().getItemStackDisplayName(leaves));

@@ -3,10 +3,8 @@ package factorization.shared;
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.Mod.EventHandler;
-import cpw.mods.fml.common.ModContainer;
 import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.*;
-import cpw.mods.fml.common.event.FMLMissingMappingsEvent.Action;
 import cpw.mods.fml.common.event.FMLMissingMappingsEvent.MissingMapping;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.common.registry.EntityRegistry;
@@ -14,6 +12,7 @@ import cpw.mods.fml.common.registry.GameRegistry;
 import cpw.mods.fml.common.registry.GameRegistry.Type;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
+import factorization.Tags;
 import factorization.artifact.InspirationManager;
 import factorization.beauty.EntityLeafBomb;
 import factorization.charge.TileEntitySolarBoiler;
@@ -25,20 +24,19 @@ import factorization.common.FactorizationProxy;
 import factorization.common.FactoryType;
 import factorization.common.FzConfig;
 import factorization.common.Registry;
-import factorization.compat.CompatModuleLoader;
-import factorization.coremod.AtVerifier;
-import factorization.coremod.LoadingPlugin;
+import factorization.compat.CompatLoadEvent;
+import factorization.compat.DefaultCompatEvents;
 import factorization.darkiron.BlockDarkIronOre;
 import factorization.fzds.Hammer;
 import factorization.fzds.HammerEnabled;
 import factorization.mechanics.MechanismsFeature;
 import factorization.oreprocessing.FactorizationOreProcessingHandler;
+import factorization.oreprocessing.ItemOreProcessing;
 import factorization.servo.ServoMotor;
 import factorization.servo.stepper.EntityGrabController;
 import factorization.servo.stepper.StepperEngine;
 import factorization.truth.minecraft.DistributeDocs;
 import factorization.util.DataUtil;
-import factorization.util.FzUtil;
 import factorization.weird.EntityMinecartDayBarrel;
 import factorization.weird.poster.EntityPoster;
 import factorization.wrath.TileEntityWrathLamp;
@@ -46,20 +44,20 @@ import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.IIconRegister;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.command.ICommandSender;
 import net.minecraft.creativetab.CreativeTabs;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.launchwrapper.Launch;
-import net.minecraft.util.*;
+import net.minecraft.util.EnumChatFormatting;
+import net.minecraft.util.IIcon;
+import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.StatCollector;
 import net.minecraftforge.common.MinecraftForge;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.*;
-import java.net.URL;
 import java.util.*;
 
 @Mod(
@@ -71,9 +69,9 @@ import java.util.*;
         guiFactory = "factorization.common.FzConfigGuiFactory"
 )
 public class Core {
-    public static final String modId = "factorization";
-    public static final String name = "Factorization";
-    public static final String version = "@FZVERSION@"; // Modified by build script, but we have to live with this in dev environ.
+    public static final String modId = Tags.MODID;
+    public static final String name = Tags.MODNAME;
+    public static final String version = Tags.VERSION; // Modified by build script, but we have to live with this in dev environ.
 
     public Core() {
         instance = this;
@@ -82,7 +80,6 @@ public class Core {
         foph = new FactorizationOreProcessingHandler();
         network = new NetworkFactorization();
         netevent = new FzNetEventHandler();
-        compatLoader = new CompatModuleLoader();
     }
     
     // runtime storage
@@ -94,7 +91,6 @@ public class Core {
     public static FactorizationProxy proxy;
     public static NetworkFactorization network;
     public static FzNetEventHandler netevent;
-    public static CompatModuleLoader compatLoader;
     public static int factory_rendertype = -1, nonte_rendertype = -1;
     public static boolean finished_loading = false;
 
@@ -102,7 +98,6 @@ public class Core {
     public static final boolean cheat = dev_only(false);
     public static final boolean cheat_servo_energy = dev_only(false);
     public static final boolean debug_network = false;
-    public static final boolean show_fine_logging = false;
     public static final boolean enable_test_content = dev_environ || Boolean.parseBoolean(System.getProperty("fz.enableTestContent"));
 
     private static boolean dev_only(boolean a) {
@@ -112,89 +107,9 @@ public class Core {
 
     static public boolean serverStarted = false;
 
-    private static boolean checked = false;
-    public static void checkJar() {
-        if (checked) return;
-        checked = true;
-        // Apparently some people somehow manage to get "Factorization.jar.zip", which somehow breaks the coremod.
-        if (Core.dev_environ) {
-            Core.logSevere("Dev environ; skipping jar check.");
-            return;
-        }
-        if (Boolean.parseBoolean(System.getProperty("fz.dontCheckJar"))) {
-            Core.logSevere("checkJar disabled by system property");
-            return;
-        }
-        ModContainer mod = FMLCommonHandler.instance().findContainerFor(modId);
-        if (mod == null) {
-            Core.logSevere("I don't have a mod container? Wat?");
-            return;
-        }
-        final File src = mod.getSource();
-        if (src == null) {
-            Core.logSevere("mod has null source!");
-            return;
-        }
-        if (src.isDirectory()) {
-            throw new RuntimeException("Factorization jar has been unpacked into a directory. Don't do that. Just put Factorization.jar in the mods/ folder");
-        }
-        final String path = src.getPath();
-        if (!isBadName(path)) {
-            Core.logSevere("Mod jar seems to have a valid filename");
-            return;
-        }
-        String correctName = path.replaceAll("\\.zip$", ".jar");
-        if (isBadName(correctName)) {
-            // Carefully ensure we don't make a loop
-            Core.logSevere("Failed to fix filename? " + path + " didn't work when changed to " + correctName);
-            return;
-        }
-
-        Core.logSevere("The factorization jar is improperly named! Renaming " + path + "  to " + correctName);
-        boolean success = src.renameTo(new File(correctName));
-        if (success) {
-            throw new RuntimeException("The Factorization jar had an improper file extension. It has been renamed. Please restart Minecraft.");
-        } else {
-            throw new RuntimeException("The Factorization jar has an improper file extension; it should be a .jar, not a .zip, and not a .jar.zip.");
-        }
-    }
-
-    private static boolean isBadName(String path) {
-        if (path == null) return false;
-        return path.endsWith(".zip");
-    }
-
-    void checkForge() { }
-
-    private static void validateEnvironment() {
-        if (!LoadingPlugin.pluginInvoked) {
-            String fml = "-Dfml.coreMods.load=factorization.coremod.LoadingPlugin";
-            String ignore = "-Dfz.ignoreMissingCoremod=true";
-            if ("".equals(System.getProperty("fz.ignoreMissingCoremod", ""))) {
-                String dev = dev_environ ? "You're in a dev environ, so this is to be expected.\n" : "";
-                throw new IllegalStateException("Coremod didn't load! Is your installation broken?\n" +
-                        "Weird. It really is supposed to load, y'know...\n" +
-                        "Anyways, try adding this flag to the JVM command line: " + fml + "\n" +
-                        dev +
-                        "(If the '-Dfml.coreMods.load' property is already being passed with another coremod, instead add the FZ coremod class with a comma.)\n" +
-                        "If you want to force loading to continue anyways, without the coremod, " +
-                        "pass the following flag, but many things (including blowing up diamond blocks) will be broken: " + ignore);
-            } else {
-                System.err.println("Coremod did not load! But continuing anyways; as per VM flag " + ignore);
-            }
-        }
-        if (!dev_environ) {
-            if ("".equals(System.getProperty("fz.dontVerifyAt", ""))) {
-                AtVerifier.verify();
-            }
-        }
-    }
-
     @EventHandler
     public void load(FMLPreInitializationEvent event) {
         initializeLogging(event.getModLog());
-        checkJar();
-        checkForge();
         Core.loadBus(registry);
         fzconfig.loadConfig(event.getSuggestedConfigurationFile());
         registry.makeBlocks();
@@ -213,6 +128,7 @@ public class Core {
             MinecraftForge.EVENT_BUS.register(dd);
             FMLCommonHandler.instance().bus().register(dd);
         }
+        loadBus(new DefaultCompatEvents());
 
         MechanismsFeature.initialize();
         
@@ -226,8 +142,7 @@ public class Core {
         FMLInterModComms.sendMessage(truth, "AddRecipeCategory", "Crystallizer|factorization.oreprocessing.TileEntityCrystallizer|recipes");
         FMLInterModComms.sendMessage(truth, "AddRecipeCategory", "Slag Furnace|factorization.oreprocessing.TileEntitySlagFurnace$SlagRecipes|smeltingResults");
         FMLInterModComms.sendMessage(truth, "DocVar", "fzverion=" + Core.version);
-        compatLoader.loadCompat();
-        compatLoader.preinit(event);
+        MinecraftForge.EVENT_BUS.post(new CompatLoadEvent.PreInit(event));
     }
     
     void registerSimpleTileEntities() {
@@ -255,7 +170,7 @@ public class Core {
         ColossusFeature.init();
         PatreonRewards.init();
         InspirationManager.init();
-        compatLoader.init(event);
+        MinecraftForge.EVENT_BUS.post(new CompatLoadEvent.Init(event));
     }
 
     @EventHandler
@@ -266,10 +181,9 @@ public class Core {
         registry.addOtherRecipes();
         for (FactoryType ft : FactoryType.values()) ft.getRepresentative(); // Make sure everyone's registered to the EVENT_BUS
         proxy.afterLoad();
-        compatLoader.postinit(event);
+        MinecraftForge.EVENT_BUS.post(new CompatLoadEvent.PostInit(event));
         finished_loading = true;
         Blocks.diamond_block.setHardness(5.0F).setResistance(10.0F);
-        validateEnvironment();
     }
     
     @EventHandler
@@ -288,46 +202,39 @@ public class Core {
             if (tec != null) tec.mappingsChanged(event);
         }
     }
-    
-    private Set<String> getDeadItems() {
-        InputStream is = null;
-        final String dead_list = "/factorization_dead_items";
-        try {
-            HashSet<String> found = new HashSet<String>();
-            URL url = getClass().getResource(dead_list);
-            is = url.openStream();
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            while (true) {
-                String line = br.readLine();
-                if (line == null) {
-                    break;
-                }
-                found.add(line);
-            }
-            return found;
-        } catch (IOException e) {
-            Core.logSevere("Failed to load " + dead_list);
-            e.printStackTrace();
-            return new HashSet<String>();
-        } finally {
-            FzUtil.closeNoisily("closing " + dead_list, is);
-        }
-    }
-    
+
     @EventHandler
     public void abandonDeadItems(FMLMissingMappingsEvent event) {
-        Set<String> theDead = getDeadItems();
         for (MissingMapping missed : event.get()) {
-            if (missed.name.startsWith("factorization:")) {
-                if (theDead.contains(missed.name)) {
-                    missed.ignore();
-                } else if (missed.getAction() != Action.IGNORE) {
-                    Core.logSevere("Missing mapping: " + missed.name);
+            if (missed.name.startsWith(Core.modId + ":ore/")) { // factorization:ore/[state]
+                String[] split = missed.name.split("/");
+                if (split.length != 2) {
+                    continue;
+                }
+                ItemOreProcessing.OreType oreType = ItemOreProcessing.OreType.fromID(missed.id);
+                if (oreType == null) {
+                    continue;
+                }
+                missed.remap(oreType.getItem(split[1]));
+            }
+            if (containsUpperCase(missed.name)) {
+                if (missed.type == GameRegistry.Type.ITEM) {
+                    missed.remap((Item) Item.itemRegistry.getObject(missed.name.toLowerCase(Locale.ROOT)));
+                }
+                if (missed.type == GameRegistry.Type.BLOCK) {
+                    missed.remap((Block) Block.blockRegistry.getObject(missed.name.toLowerCase(Locale.ROOT)));
                 }
             }
         }
     }
-    
+
+    private static boolean containsUpperCase(String s) {
+        for (char c : s.toCharArray()) {
+            if (Character.isUpperCase(c)) return true;
+        }
+        return false;
+    }
+
     @EventHandler
     public void handleFzPrefixStrip(FMLMissingMappingsEvent event) {
         Map<String, Item> fixups = Registry.nameCleanup;
@@ -357,7 +264,7 @@ public class Core {
                 {"factorization:tile.factorization:darkIronOre", Core.registry.dark_iron_ore},
                 {"factorization:FZ fractured bedrock", Core.registry.fractured_bedrock_block},
         };
-        HashMap<String, Block> corr = new HashMap<String, Block>();
+        HashMap<String, Block> corr = new HashMap<>();
         for (Object[] pair : corrections) {
             corr.put((String) pair[0], (Block) pair[1]);
         }
@@ -379,7 +286,7 @@ public class Core {
 
     ItemStack getExternalItem(String className, String classField, String description) {
         try {
-            Class c = Class.forName(className);
+            Class<?> c = Class.forName(className);
             return (ItemStack) c.getField(classField).get(null);
         } catch (Exception err) {
             logWarning("Could not get %s (from %s.%s)", description, className, classField);
@@ -397,11 +304,26 @@ public class Core {
     public static void logSevere(String format, Object... formatParameters) {
         FZLogger.error(String.format(format, formatParameters));
     }
+
+    public static void logError(String msg, Throwable error) {
+        FZLogger.error(msg, error);
+    }
+
+    public static void logError(String msg, Object... params) {
+        FZLogger.error(msg, params);
+    }
     
     public static void logWarning(String format, Object... formatParameters) {
         FZLogger.warn(String.format(format, formatParameters));
     }
-    
+    public static void logWarn(String msg, Throwable error, Object... params) {
+        FZLogger.warn(msg, params, error);
+    }
+
+    public static void logWarn(String msg, Throwable error) {
+        FZLogger.warn(msg, error);
+    }
+
     public static void logInfo(String format, Object... formatParameters) {
         FZLogger.info(String.format(format, formatParameters));
     }
@@ -412,15 +334,9 @@ public class Core {
         }
     }
     
-    static final ThreadLocal<Boolean> isMainClientThread = new ThreadLocal<Boolean>() {
-        @Override
-        protected Boolean initialValue() { return false; }
-    };
+    static final ThreadLocal<Boolean> isMainClientThread = ThreadLocal.withInitial(() -> false);
     
-    static final ThreadLocal<Boolean> isMainServerThread = new ThreadLocal<Boolean>() {
-        @Override
-        protected Boolean initialValue() { return false; }
-    };
+    static final ThreadLocal<Boolean> isMainServerThread = ThreadLocal.withInitial(() -> false);
 
     //TODO: Pass World to these? They've got profiler fields.
     public static void profileStart(String section) {
@@ -446,13 +362,13 @@ public class Core {
         profileEnd();
     }
     
-    private static void addTranslationHints(String hint_key, List list, String prefix) {
+    private static void addTranslationHints(String hint_key, List<String> list, String prefix) {
         if (StatCollector.canTranslate(hint_key)) {
             //if (st.containsTranslateKey(hint_key) /* containsTranslateKey = containsTranslateKey */ ) {
             String hint = StatCollector.translateToLocal(hint_key);
             if (hint != null) {
                 hint = hint.trim();
-                if (hint.length() > 0) {
+                if (!hint.isEmpty()) {
                     for (String s : hint.split("\\\\n") /* whee */) {
                         list.add(prefix + s);
                     }
@@ -464,14 +380,14 @@ public class Core {
     public static final String hintFormat = "" + EnumChatFormatting.DARK_PURPLE;
     public static final String shiftFormat = "" + EnumChatFormatting.DARK_GRAY + EnumChatFormatting.ITALIC;
     
-    public static void brand(ItemStack is, EntityPlayer player, List list, boolean verbose) {
+    public static void brand(ItemStack is, EntityPlayer player, List<String> list, boolean verbose) {
         final Item it = is.getItem();
         String name = it.getUnlocalizedName(is);
         addTranslationHints(name + ".hint", list, hintFormat);
         if (player != null && proxy.isClientHoldingShift()) {
             addTranslationHints(name + ".shift", list, shiftFormat);
         }
-        ArrayList<String> untranslated = new ArrayList<String>();
+        ArrayList<String> untranslated = new ArrayList<>();
         if (it instanceof ItemFactorization) {
             ((ItemFactorization) it).addExtraInformation(is, player, untranslated, verbose);
         }
@@ -485,7 +401,7 @@ public class Core {
         if (dev_environ) {
             brand += " Development!";
         }
-        if (brand.length() > 0) {
+        if (!brand.isEmpty()) {
             untranslated.add(EnumChatFormatting.BLUE + brand.trim());
         }
         for (String s : untranslated) {
@@ -495,7 +411,7 @@ public class Core {
     
     
     public enum TabType {
-        ART, CHARGE, OREP, SERVOS, ROCKETRY, TOOLS, BLOCKS, MATERIALS, COLOSSAL, ARTIFACT;
+        ART, CHARGE, OREP, SERVOS, ROCKETRY, TOOLS, BLOCKS, MATERIALS, COLOSSAL, ARTIFACT
     }
     
     public static CreativeTabs tabFactorization = new CreativeTabs("factorizationTab") {

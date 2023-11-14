@@ -3,18 +3,19 @@ package factorization.api.crafting;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
-public final class CraftingManagerGeneric<MachineType> implements Iterable {
-    private static final HashMap<Class, CraftingManagerGeneric> systems = new HashMap<Class, CraftingManagerGeneric>();
+public final class CraftingManagerGeneric<MachineType> implements Iterable<IVexatiousCrafting<MachineType>> {
+    private static final Map<Class, CraftingManagerGeneric> systems = new HashMap<>();
 
     public static <M> CraftingManagerGeneric<M> get(Class<M> klass) {
         CraftingManagerGeneric<M> ret = systems.get(klass);
         if (ret != null) return ret;
-        systems.put(klass, ret = new CraftingManagerGeneric<M>(klass));
+        systems.put(klass, ret = new CraftingManagerGeneric<>(klass));
         return ret;
     }
 
-    public final ArrayList<IVexatiousCrafting<MachineType>> list = new ArrayList<IVexatiousCrafting<MachineType>>();
+    public final ArrayList<IVexatiousCrafting<MachineType>> list = new ArrayList<>();
 
     CraftingManagerGeneric(Class<MachineType> machineClass) {
         systems.put(machineClass, this);
@@ -32,7 +33,7 @@ public final class CraftingManagerGeneric<MachineType> implements Iterable {
     }
 
     @Override
-    public Iterator iterator() {
+    public Iterator<IVexatiousCrafting<MachineType>> iterator() {
         return list.iterator();
     }
 }

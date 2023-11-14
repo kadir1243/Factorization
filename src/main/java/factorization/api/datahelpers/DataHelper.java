@@ -129,14 +129,12 @@ for t in all_types:
 
     public ArrayList<ItemStack> putItemList(ArrayList<ItemStack> value) throws IOException {
         if (isReader() && hasLegacy(name + "_len")) {
-            //noinspection deprecation
             return putItemArray_legacy(value);
         }
         return putItemList_efficient(value);
     }
 
     protected ArrayList<ItemStack> putItemList_efficient(ArrayList<ItemStack> value) throws IOException {
-        //noinspection deprecation
         return putItemArray_legacy(value);
     }
 

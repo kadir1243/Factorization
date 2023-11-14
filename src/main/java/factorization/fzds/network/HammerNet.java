@@ -25,7 +25,6 @@ import net.minecraft.block.Block;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.item.ItemBlock;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.NetHandlerPlayServer;
 import net.minecraft.server.management.ItemInWorldManager;
@@ -38,7 +37,6 @@ import net.minecraftforge.event.entity.player.PlayerDestroyItemEvent;
 import net.minecraftforge.event.world.BlockEvent.PlaceEvent;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 
 public class HammerNet {
@@ -389,8 +387,7 @@ public class HammerNet {
     public static FMLProxyPacket makePacket(byte type, Object... items) {
         ByteArrayDataOutput dos = ByteStreams.newDataOutput();
         dos.writeByte(type);
-        for (int i = 0; i < items.length; i++) {
-            Object obj = items[i];
+        for (Object obj : items) {
             if (obj instanceof Quaternion) {
                 ((Quaternion) obj).write(dos);
             } else if (obj instanceof Integer) {
@@ -401,8 +398,7 @@ public class HammerNet {
                 dos.writeFloat((Float) obj);
             } else if (obj instanceof Double) {
                 dos.writeDouble((Double) obj);
-            } else if (obj instanceof MovingObjectPosition) { 
-                MovingObjectPosition mop = (MovingObjectPosition) obj;
+            } else if (obj instanceof MovingObjectPosition mop) {
                 dos.writeInt(mop.blockX);
                 dos.writeInt(mop.blockY);
                 dos.writeInt(mop.blockZ);

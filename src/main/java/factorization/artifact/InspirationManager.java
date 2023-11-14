@@ -3,6 +3,7 @@ package factorization.artifact;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
+import cpw.mods.fml.relauncher.Side;
 import factorization.api.Coord;
 import factorization.shared.Core;
 import factorization.shared.Sound;
@@ -104,10 +105,11 @@ public class InspirationManager {
     public void tick(TickEvent.ServerTickEvent event) {
         if (ticks++ < check_tick_rate) return;
         ticks = 0;
-        for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
-            if (!(obj instanceof EntityPlayer)) continue;
-            EntityPlayer player = (EntityPlayer) obj;
-            poke(player, false);
+    }
+
+    public void tick(TickEvent.PlayerTickEvent event) {
+        if (event.side == Side.SERVER) {
+            poke(event.player, false);
         }
     }
 
@@ -129,10 +131,9 @@ public class InspirationManager {
         msg = msg.setChatStyle(aqua);
         MinecraftServer.getServer().getConfigurationManager().sendChatMsgImpl(msg, false);
         resetArtifactDelay(player);
-        for (Object obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
-            if (!(obj instanceof EntityPlayer)) continue;
-            EntityPlayer peep = (EntityPlayer) obj;
-            Sound.artifactForged.playAt(new Coord(peep));
+        for (EntityPlayer obj : MinecraftServer.getServer().getConfigurationManager().playerEntityList) {
+            if (obj == null) continue;
+            Sound.artifactForged.playAt(new Coord(obj));
         }
     }
 }

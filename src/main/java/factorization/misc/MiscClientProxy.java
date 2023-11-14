@@ -1,7 +1,6 @@
 package factorization.misc;
 
 import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import factorization.algos.ReservoirSampler;
@@ -13,10 +12,12 @@ import factorization.truth.DocumentationModule;
 import factorization.util.FzUtil;
 import factorization.weird.NeptuneCape;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.*;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiMainMenu;
+import net.minecraft.client.gui.GuiOptions;
+import net.minecraft.client.gui.GuiSelectWorld;
 import net.minecraft.client.gui.inventory.GuiContainer;
 import net.minecraft.client.resources.IResource;
-import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.inventory.Slot;
@@ -36,7 +37,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Random;
 
@@ -187,24 +188,22 @@ public class MiscClientProxy extends MiscProxy {
     int last_hash = 0;
     @SubscribeEvent
     public void customSplash(InitGuiEvent.Pre event) {
-        if (!(event.gui instanceof GuiMainMenu)) return;
+        if (!(event.gui instanceof GuiMainMenu menu)) return;
         int hash = event.gui.hashCode();
         if (hash == last_hash) return;
         last_hash = hash;
-        GuiMainMenu menu = (GuiMainMenu) event.gui;
-        ReservoirSampler<String> sampler = new ReservoirSampler<String>(1, new Random());
+        ReservoirSampler<String> sampler = new ReservoirSampler<>(1, new Random());
         sampler.give(menu.splashText);
         sampler.preGive(321); // NORELEASE: Verify this number each MC version. (Or we could just count it. Hmm.)
         sampler.give(""); // !!!! The secret EMPTY splash text! :O
         try {
-            @SuppressWarnings("unchecked")
             List<IResource> resources = mc.getResourceManager().getAllResources(new ResourceLocation("minecraft:texts/extra_splashes.txt"));
             for (IResource res : resources) {
                 InputStream is = null;
                 try {
                     is = res.getInputStream();
                     if (is == null) continue;
-                    BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(is, Charsets.UTF_8));
+                    BufferedReader bufferedreader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));
                     String s;
 
                     while ((s = bufferedreader.readLine()) != null) {
@@ -235,7 +234,7 @@ public class MiscClientProxy extends MiscProxy {
         if (search == null) return;
         GameSettings gm = Minecraft.getMinecraft().gameSettings;
         Command command;
-        boolean sneak = Keyboard.isKeyDown(Keyboard.KEY_LSHIFT) || Keyboard.isKeyDown(Keyboard.KEY_RSHIFT);
+        boolean sneak = gm.keyBindSneak.getIsKeyPressed();
         // Ugly!
         if (event.keysym == gm.keyBindLeft.getKeyCode()) {
             command = sneak ? Command.itemTransferLeftShift : Command.itemTransferLeft;

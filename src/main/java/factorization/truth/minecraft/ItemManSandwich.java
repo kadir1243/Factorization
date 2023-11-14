@@ -34,6 +34,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ItemManSandwich extends ItemFood implements IManwich {
     StatBase manwhichStatus;
@@ -122,10 +123,8 @@ public class ItemManSandwich extends ItemFood implements IManwich {
     public void onUpdate(ItemStack stack, World world, Entity ent, int currentSlot, boolean isHeld) {
         if (!isHeld) return;
         if (world.isRemote) return;
-        if (ent instanceof EntityLivingBase) {
-            EntityLivingBase player = (EntityLivingBase) ent;
-            if (ent instanceof EntityPlayer) {
-                EntityPlayer p = (EntityPlayer) ent;
+        if (ent instanceof EntityLivingBase player) {
+            if (ent instanceof EntityPlayer p) {
                 if (p.isUsingItem()) return; // Your mouth's got a firm grip on it
             }
             if (player.hurtTime > 0) {
@@ -137,12 +136,11 @@ public class ItemManSandwich extends ItemFood implements IManwich {
     }
 
     void syncStat(EntityPlayer _player) {
-        if (!(_player instanceof EntityPlayerMP)) return;
-        EntityPlayerMP player = (EntityPlayerMP) _player;
+        if (!(_player instanceof EntityPlayerMP player)) return;
         StatisticsFile stats = PlayerUtil.getStatsFile(player);
         if (stats == null) return;
         int sandwiches = stats.writeStat(manwhichStatus);
-        HashMap statInfo = new HashMap();
+        Map<StatBase, Integer> statInfo = new HashMap<>();
         statInfo.put(manwhichStatus, sandwiches);
         player.playerNetServerHandler.sendPacket(new S37PacketStatistics(statInfo));
     }
@@ -156,7 +154,7 @@ public class ItemManSandwich extends ItemFood implements IManwich {
     }
 
     @Override
-    public void addInformation(ItemStack stack, EntityPlayer player, List list, boolean verbose) {
+    public void addInformation(ItemStack stack, EntityPlayer player, List<String> list, boolean verbose) {
         if (Core.dev_environ) {
             list.add("Sandwich level: " + hasManual(player));
         }
@@ -197,7 +195,7 @@ public class ItemManSandwich extends ItemFood implements IManwich {
     }
 
     @Override
-    public void getSubItems(Item item, CreativeTabs tab, List list) {
+    public void getSubItems(Item item, CreativeTabs tab, List<ItemStack> list) {
         super.getSubItems(item, tab, list);
         list.add(new ItemStack(this, 1, 1));
     }

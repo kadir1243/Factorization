@@ -17,7 +17,7 @@ public class FluidUtil {
 
     public static FluidStack drainSpecificBlockFluid(World worldObj, int x, int y, int z, boolean doDrain, Fluid targetFluid) {
         Block b = worldObj.getBlock(x, y, z);
-        if (!(b instanceof IFluidBlock)) {
+        if (!(b instanceof IFluidBlock block)) {
             Fluid vanilla;
             if (b == Blocks.water || b == Blocks.flowing_water) {
                 vanilla = FluidRegistry.WATER;
@@ -34,7 +34,6 @@ public class FluidUtil {
             }
             return new FluidStack(vanilla, FluidContainerRegistry.BUCKET_VOLUME);
         }
-        IFluidBlock block = (IFluidBlock) b;
         if (!block.canDrain(worldObj, x, y, z)) return null;
         FluidStack fs = block.drain(worldObj, x, y, z, false);
         if (fs == null) return null;
